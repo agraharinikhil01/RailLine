@@ -11,8 +11,11 @@ export interface JourneyMapProps {
   onStationSelect?: (station: JourneyStation) => void;
 }
 
-// CARTO Dark Matter vector style provides a reliable dark map theme (PRD §4.2)
-const DARK_MAP_STYLE = 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json';
+// MapTiler Dataviz Dark style with Carto Dark Matter fallback (PRD §4.2)
+const maptilerKey = import.meta.env.VITE_MAPTILER_API_KEY;
+const DARK_MAP_STYLE = maptilerKey && maptilerKey !== 'default_key'
+  ? `https://api.maptiler.com/maps/dataviz-dark/style.json?key=${maptilerKey}`
+  : 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json';
 
 export const JourneyMap: React.FC<JourneyMapProps> = ({
   status,

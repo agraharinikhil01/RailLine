@@ -1,12 +1,13 @@
 import { Weather, RouteWeather, JourneyStation } from '@railline/types';
 import { activeTrainProvider } from './index';
+import { env } from '../config/env';
 
 export interface WeatherProvider {
   getWeather(lat: number, lng: number, stationName?: string, stationCode?: string): Promise<Weather>;
   getRouteWeather(trainNumber: string): Promise<RouteWeather | null>;
 }
 
-// Regional weather presets for Indian geography
+// Regional weather presets for Indian geography (fallback when offline or rate-limited)
 const REGION_WEATHER_DEFAULTS: Record<string, { temp: number; condition: string; humidity: number; wind: number; rainProb: number; icon: string }> = {
   NDLS: { temp: 31, condition: 'Haze', humidity: 55, wind: 12, rainProb: 10, icon: 'haze' },
   CNB: { temp: 33, condition: 'Partly Cloudy', humidity: 62, wind: 14, rainProb: 20, icon: 'cloud-sun' },
@@ -21,8 +22,47 @@ const REGION_WEATHER_DEFAULTS: Record<string, { temp: number; condition: string;
   KOTA: { temp: 35, condition: 'Hot', humidity: 45, wind: 15, rainProb: 5, icon: 'sun' },
 };
 
-export class MockWeatherProvider implements WeatherProvider {
+export class LiveOpenWeatherProvider implements WeatherProvider {
+  private apiKey: string | undefined;
+
+  constructor(apiKey?: string) {
+    this.apiKey = apiKey || env.OPENWEATHER_API_KEY;
+  }
+
   async getWeather(lat: number, lng: number, stationName?: string, stationCode?: string): Promise<Weather> {
+    // If API key is configured, attempt real OpenWeather query
+    if (this.apiKey) {
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 3500); // 3.5s timeout
+
+        const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lng}&units=metric&appid=${this.apiKey}`;
+        const res = await fetch(url, { signal: controller.signal });
+        clearTimeout(timeout);
+
+        if (res.ok) {
+          const data = await res.json();
+          return {
+            stationCode,
+            stationName: stationName || data.name || 'Route Point',
+            latitude: lat,
+            longitude: lng,
+            temperature: Math.round(data.main.temp),
+            feelsLike: Math.round(data.main.feels_like),
+            humidity: data.main.humidity,
+            windSpeed: Math.round((data.wind?.speed || 0) * 3.6), // Convert m/s to km/h
+            rainProbability: data.clouds?.all ? Math.min(95, Math.round(data.clouds.all * 0.7)) : 10,
+            condition: data.weather?.[0]?.main || 'Clear',
+            icon: data.weather?.[0]?.icon || 'sun',
+            updatedAt: new Date().toISOString(),
+          };
+        }
+      } catch (err) {
+        console.warn(`[OpenWeather] API query failed, using regional meteorological fallback for (${lat}, ${lng})`, err);
+      }
+    }
+
+    // Graceful fallback to regional meteorological data (PRD Rule 5: Optional enrichment never blocks)
     const preset = (stationCode && REGION_WEATHER_DEFAULTS[stationCode]) || {
       temp: 30,
       condition: 'Partly Cloudy',
@@ -99,4 +139,4 @@ export class MockWeatherProvider implements WeatherProvider {
   }
 }
 
-export const weatherProvider: WeatherProvider = new MockWeatherProvider();
+export const weatherProvider: WeatherProvider = new LiveOpenWeatherProvider();

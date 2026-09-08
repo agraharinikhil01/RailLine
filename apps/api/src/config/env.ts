@@ -9,8 +9,9 @@ const envSchema = z.object({
   HOST: z.string().default('0.0.0.0'),
   CORS_ORIGIN: z.string().default('http://localhost:5173'),
   RAILRADAR_API_KEY: z.string().optional(),
-  MAPTILER_API_KEY: z.string().optional().default('default_key'),
   OPENWEATHER_API_KEY: z.string().optional(),
+  OPENTOPOGRAPHY_API_KEY: z.string().optional(),
+  MAPTILER_API_KEY: z.string().optional().default('default_key'),
 });
 
 export type Env = z.infer<typeof envSchema>;
