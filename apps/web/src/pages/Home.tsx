@@ -77,7 +77,7 @@ export const Home: React.FC = () => {
 
   const handleSelectTrain = (train: TrainSearchResult) => {
     addRecentSearch(train);
-    navigate(`/journey/${train.trainNumber}`);
+    navigate(`/tracking/${train.trainNumber}`);
   };
 
   const handleQuickSearch = (number: string) => {

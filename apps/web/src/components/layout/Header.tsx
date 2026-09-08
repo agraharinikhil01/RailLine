@@ -1,13 +1,13 @@
 import React from 'react';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
-import { Search, Compass, Heart, Sliders } from 'lucide-react';
+import { Search, Compass } from 'lucide-react';
 import { clsx } from 'clsx';
 
 export const Header: React.FC = () => {
   const location = useLocation();
 
   const isSearchActive = location.pathname === '/';
-  const isTrackingActive = location.pathname.startsWith('/journey');
+  const isTrackingActive = location.pathname.startsWith('/tracking');
 
   return (
     <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-subtle">
@@ -34,9 +34,9 @@ export const Header: React.FC = () => {
           </div>
         </RouterLink>
 
-        {/* Navigation Actions matching the screenshot pill controls */}
+        {/* Navigation Actions matching ONLY the 2 screens in the screenshots */}
         <nav className="flex items-center gap-2">
-          {/* Search Pill */}
+          {/* Search Pill (Screen 1) */}
           <RouterLink
             to="/"
             className={clsx(
@@ -50,9 +50,9 @@ export const Header: React.FC = () => {
             <span>Search</span>
           </RouterLink>
 
-          {/* Live Tracking Pill */}
+          {/* Live Tracking Pill (Screen 2) */}
           <RouterLink
-            to="/journey/12951"
+            to="/tracking/12951"
             className={clsx(
               'px-4 py-2 text-xs font-semibold rounded-full transition-all flex items-center gap-1.5 shadow-2xs',
               isTrackingActive
@@ -62,34 +62,6 @@ export const Header: React.FC = () => {
           >
             <Compass className="w-3.5 h-3.5" />
             <span>Live Tracking</span>
-          </RouterLink>
-
-          {/* Favorites */}
-          <RouterLink
-            to="/favorites"
-            title="Saved Favorites"
-            className={clsx(
-              'p-2 rounded-full transition-colors',
-              location.pathname === '/favorites'
-                ? 'bg-slate-100 text-rose-600 font-semibold'
-                : 'text-slate-400 hover:text-slate-800 hover:bg-slate-100'
-            )}
-          >
-            <Heart className="w-4 h-4" />
-          </RouterLink>
-
-          {/* Settings */}
-          <RouterLink
-            to="/settings"
-            title="Application Settings"
-            className={clsx(
-              'p-2 rounded-full transition-colors',
-              location.pathname === '/settings'
-                ? 'bg-slate-100 text-slate-900 font-semibold'
-                : 'text-slate-400 hover:text-slate-800 hover:bg-slate-100'
-            )}
-          >
-            <Sliders className="w-4 h-4" />
           </RouterLink>
         </nav>
       </div>

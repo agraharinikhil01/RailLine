@@ -1,12 +1,9 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Header } from './components/layout/Header';
 import { Home } from './pages/Home';
 import { Journey } from './pages/Journey';
-import { SharedJourney } from './pages/SharedJourney';
-import { Favorites } from './pages/Favorites';
-import { Settings } from './pages/Settings';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -17,6 +14,12 @@ const queryClient = new QueryClient({
   },
 });
 
+// Helper for redirecting any legacy /journey/:trainNumber to /tracking/:trainNumber
+const LegacyJourneyRedirect: React.FC = () => {
+  const { trainNumber } = useParams<{ trainNumber: string }>();
+  return <Navigate to={`/tracking/${trainNumber || '12951'}`} replace />;
+};
+
 export const App: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
@@ -25,11 +28,16 @@ export const App: React.FC = () => {
           <Header />
           <div className="flex-1">
             <Routes>
+              {/* 1. Home / Search Screen */}
               <Route path="/" element={<Home />} />
-              <Route path="/journey/:trainNumber" element={<Journey />} />
-              <Route path="/journey/shared/:shareToken" element={<SharedJourney />} />
-              <Route path="/favorites" element={<Favorites />} />
-              <Route path="/settings" element={<Settings />} />
+
+              {/* 2. Train Tracking Screen */}
+              <Route path="/tracking/:trainNumber" element={<Journey />} />
+
+              {/* Legacy Redirect */}
+              <Route path="/journey/:trainNumber" element={<LegacyJourneyRedirect />} />
+
+              {/* Fallback */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </div>
