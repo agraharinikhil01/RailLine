@@ -11,7 +11,7 @@
     "dev": "npm run dev --workspaces --if-present",
     "dev:api": "npm run dev --workspace=@railline/api",
     "dev:web": "npm run dev --workspace=@railline/web",
-    "build": "npm run build --workspaces --if-present",
+    "build": "npm run build --workspace=@railline/types && npm run build --workspace=@railline/api && npm run build --workspace=@railline/web",
     "test": "npx tsx --test apps/api/test/api.test.ts"
   },
   "keywords": [

@@ -9,7 +9,7 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "paths": {
-      "@railline/types": ["../../packages/types/dist"]
+      "@railline/types": ["../../packages/types/src", "../../packages/types/dist"]
     }
   },
   "include": ["src/**/*"]
