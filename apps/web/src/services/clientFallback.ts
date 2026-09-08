@@ -5,6 +5,8 @@ import {
   Station,
   RouteWeather,
   GeographicPlace,
+  LiveTrainStatus,
+  RunningStatus,
 } from '@railline/types';
 
 interface TrainRouteData {
@@ -65,86 +67,13 @@ const TRAINS_DATABASE: Record<string, TrainRouteData> = {
       ],
     },
     stations: [
-      {
-        station: STATIONS_MAP.MMCT,
-        distanceFromSourceKm: 0,
-        scheduledDeparture: '17:00',
-        actualDeparture: '17:02',
-        delayMinutes: 2,
-        platform: '1',
-        status: 'COMPLETED',
-        isHalt: true,
-      },
-      {
-        station: STATIONS_MAP.BVI,
-        distanceFromSourceKm: 30,
-        scheduledArrival: '17:22',
-        scheduledDeparture: '17:24',
-        actualArrival: '17:25',
-        actualDeparture: '17:27',
-        delayMinutes: 3,
-        platform: '6',
-        status: 'COMPLETED',
-        isHalt: true,
-      },
-      {
-        station: STATIONS_MAP.ST,
-        distanceFromSourceKm: 263,
-        scheduledArrival: '19:43',
-        scheduledDeparture: '19:48',
-        actualArrival: '19:50',
-        actualDeparture: '19:55',
-        delayMinutes: 7,
-        platform: '1',
-        status: 'COMPLETED',
-        isHalt: true,
-      },
-      {
-        station: STATIONS_MAP.BRC,
-        distanceFromSourceKm: 392,
-        scheduledArrival: '21:06',
-        scheduledDeparture: '21:16',
-        actualArrival: '21:15',
-        actualDeparture: '21:26',
-        delayMinutes: 10,
-        platform: '2',
-        status: 'COMPLETED',
-        isHalt: true,
-      },
-      {
-        station: STATIONS_MAP.RTM,
-        distanceFromSourceKm: 653,
-        scheduledArrival: '00:25',
-        scheduledDeparture: '00:28',
-        expectedArrival: '00:43',
-        expectedDeparture: '00:46',
-        delayMinutes: 18,
-        platform: '5',
-        status: 'CURRENT',
-        isHalt: true,
-      },
-      {
-        station: STATIONS_MAP.KOTA,
-        distanceFromSourceKm: 920,
-        scheduledArrival: '03:15',
-        scheduledDeparture: '03:20',
-        expectedArrival: '03:31',
-        expectedDeparture: '03:36',
-        delayMinutes: 16,
-        platform: '1',
-        status: 'UPCOMING',
-        isHalt: true,
-      },
-      {
-        station: STATIONS_MAP.NDLS,
-        distanceFromSourceKm: 1386,
-        scheduledArrival: '08:32',
-        expectedArrival: '08:45',
-        delayMinutes: 13,
-        platform: '3',
-        status: 'UPCOMING',
-        isHalt: true,
-      },
+      { station: STATIONS_MAP.MMCT, distanceFromSourceKm: 0, scheduledDeparture: '17:00', actualDeparture: '17:02', delayMinutes: 2, platform: '1', status: 'COMPLETED', isHalt: true },
+      { station: STATIONS_MAP.BVI, distanceFromSourceKm: 30, scheduledArrival: '17:22', scheduledDeparture: '17:24', actualArrival: '17:25', actualDeparture: '17:27', delayMinutes: 3, platform: '6', status: 'COMPLETED', isHalt: true },
+      { station: STATIONS_MAP.ST, distanceFromSourceKm: 263, scheduledArrival: '19:43', scheduledDeparture: '19:48', actualArrival: '19:50', actualDeparture: '19:55', delayMinutes: 7, platform: '1', status: 'COMPLETED', isHalt: true },
+      { station: STATIONS_MAP.BRC, distanceFromSourceKm: 392, scheduledArrival: '21:06', scheduledDeparture: '21:16', actualArrival: '21:15', actualDeparture: '21:26', delayMinutes: 10, platform: '2', status: 'COMPLETED', isHalt: true },
+      { station: STATIONS_MAP.RTM, distanceFromSourceKm: 653, scheduledArrival: '00:25', scheduledDeparture: '00:28', expectedArrival: '00:43', expectedDeparture: '00:46', delayMinutes: 18, platform: '5', status: 'CURRENT', isHalt: true },
+      { station: STATIONS_MAP.KOTA, distanceFromSourceKm: 920, scheduledArrival: '03:15', scheduledDeparture: '03:20', expectedArrival: '03:31', expectedDeparture: '03:36', delayMinutes: 16, platform: '1', status: 'UPCOMING', isHalt: true },
+      { station: STATIONS_MAP.NDLS, distanceFromSourceKm: 1386, scheduledArrival: '08:32', expectedArrival: '08:45', delayMinutes: 13, platform: '3', status: 'UPCOMING', isHalt: true },
     ],
     routeCoordinates: [
       [72.8193, 18.9696],
@@ -183,84 +112,13 @@ const TRAINS_DATABASE: Record<string, TrainRouteData> = {
       ],
     },
     stations: [
-      {
-        station: STATIONS_MAP.NDLS,
-        distanceFromSourceKm: 0,
-        scheduledDeparture: '06:10',
-        actualDeparture: '06:12',
-        delayMinutes: 2,
-        platform: '1',
-        status: 'COMPLETED',
-        isHalt: true,
-      },
-      {
-        station: STATIONS_MAP.GZB,
-        distanceFromSourceKm: 26,
-        scheduledArrival: '06:48',
-        scheduledDeparture: '06:50',
-        actualArrival: '06:51',
-        actualDeparture: '06:53',
-        delayMinutes: 3,
-        platform: '2',
-        status: 'COMPLETED',
-        isHalt: true,
-      },
-      {
-        station: STATIONS_MAP.ALJN,
-        distanceFromSourceKm: 131,
-        scheduledArrival: '07:47',
-        scheduledDeparture: '07:49',
-        actualArrival: '07:52',
-        actualDeparture: '07:54',
-        delayMinutes: 5,
-        platform: '3',
-        status: 'COMPLETED',
-        isHalt: true,
-      },
-      {
-        station: STATIONS_MAP.TDL,
-        distanceFromSourceKm: 209,
-        scheduledArrival: '08:45',
-        scheduledDeparture: '08:47',
-        actualArrival: '08:52',
-        actualDeparture: '08:55',
-        delayMinutes: 8,
-        platform: '5',
-        status: 'COMPLETED',
-        isHalt: true,
-      },
-      {
-        station: STATIONS_MAP.ETW,
-        distanceFromSourceKm: 301,
-        scheduledArrival: '09:40',
-        scheduledDeparture: '09:42',
-        actualArrival: '09:50',
-        actualDeparture: '09:52',
-        delayMinutes: 10,
-        platform: '3',
-        status: 'COMPLETED',
-        isHalt: true,
-      },
-      {
-        station: STATIONS_MAP.CNB,
-        distanceFromSourceKm: 440,
-        scheduledArrival: '11:20',
-        scheduledDeparture: '11:25',
-        actualArrival: '11:32',
-        delayMinutes: 12,
-        platform: '1',
-        status: 'CURRENT',
-        isHalt: true,
-      },
-      {
-        station: STATIONS_MAP.LJN,
-        distanceFromSourceKm: 512,
-        scheduledArrival: '12:45',
-        delayMinutes: 12,
-        platform: '6',
-        status: 'UPCOMING',
-        isHalt: true,
-      },
+      { station: STATIONS_MAP.NDLS, distanceFromSourceKm: 0, scheduledDeparture: '06:10', actualDeparture: '06:12', delayMinutes: 2, platform: '1', status: 'COMPLETED', isHalt: true },
+      { station: STATIONS_MAP.GZB, distanceFromSourceKm: 26, scheduledArrival: '06:48', scheduledDeparture: '06:50', actualArrival: '06:51', actualDeparture: '06:53', delayMinutes: 3, platform: '2', status: 'COMPLETED', isHalt: true },
+      { station: STATIONS_MAP.ALJN, distanceFromSourceKm: 131, scheduledArrival: '07:47', scheduledDeparture: '07:49', actualArrival: '07:52', actualDeparture: '07:54', delayMinutes: 5, platform: '3', status: 'COMPLETED', isHalt: true },
+      { station: STATIONS_MAP.TDL, distanceFromSourceKm: 209, scheduledArrival: '08:45', scheduledDeparture: '08:47', actualArrival: '08:52', actualDeparture: '08:55', delayMinutes: 8, platform: '5', status: 'COMPLETED', isHalt: true },
+      { station: STATIONS_MAP.ETW, distanceFromSourceKm: 301, scheduledArrival: '09:40', scheduledDeparture: '09:42', actualArrival: '09:50', actualDeparture: '09:52', delayMinutes: 10, platform: '3', status: 'COMPLETED', isHalt: true },
+      { station: STATIONS_MAP.CNB, distanceFromSourceKm: 440, scheduledArrival: '11:20', scheduledDeparture: '11:25', actualArrival: '11:32', delayMinutes: 12, platform: '1', status: 'CURRENT', isHalt: true },
+      { station: STATIONS_MAP.LJN, distanceFromSourceKm: 512, scheduledArrival: '12:45', delayMinutes: 12, platform: '6', status: 'UPCOMING', isHalt: true },
     ],
     routeCoordinates: [
       [77.2195, 28.6429],
@@ -291,47 +149,10 @@ const TRAINS_DATABASE: Record<string, TrainRouteData> = {
       ],
     },
     stations: [
-      {
-        station: STATIONS_MAP.NDLS,
-        distanceFromSourceKm: 0,
-        scheduledDeparture: '06:00',
-        actualDeparture: '06:00',
-        delayMinutes: 0,
-        platform: '16',
-        status: 'COMPLETED',
-        isHalt: true,
-      },
-      {
-        station: STATIONS_MAP.CNB,
-        distanceFromSourceKm: 440,
-        scheduledArrival: '10:08',
-        scheduledDeparture: '10:10',
-        actualArrival: '10:10',
-        actualDeparture: '10:12',
-        delayMinutes: 2,
-        platform: '1',
-        status: 'COMPLETED',
-        isHalt: true,
-      },
-      {
-        station: STATIONS_MAP.PRYJ,
-        distanceFromSourceKm: 635,
-        scheduledArrival: '12:08',
-        scheduledDeparture: '12:10',
-        delayMinutes: 4,
-        platform: '6',
-        status: 'CURRENT',
-        isHalt: true,
-      },
-      {
-        station: STATIONS_MAP.BSB,
-        distanceFromSourceKm: 759,
-        scheduledArrival: '14:00',
-        delayMinutes: 4,
-        platform: '1',
-        status: 'UPCOMING',
-        isHalt: true,
-      },
+      { station: STATIONS_MAP.NDLS, distanceFromSourceKm: 0, scheduledDeparture: '06:00', actualDeparture: '06:00', delayMinutes: 0, platform: '16', status: 'COMPLETED', isHalt: true },
+      { station: STATIONS_MAP.CNB, distanceFromSourceKm: 440, scheduledArrival: '10:08', scheduledDeparture: '10:10', actualArrival: '10:10', actualDeparture: '10:12', delayMinutes: 2, platform: '1', status: 'COMPLETED', isHalt: true },
+      { station: STATIONS_MAP.PRYJ, distanceFromSourceKm: 635, scheduledArrival: '12:08', scheduledDeparture: '12:10', delayMinutes: 4, platform: '6', status: 'CURRENT', isHalt: true },
+      { station: STATIONS_MAP.BSB, distanceFromSourceKm: 759, scheduledArrival: '14:00', delayMinutes: 4, platform: '1', status: 'UPCOMING', isHalt: true },
     ],
     routeCoordinates: [
       [77.2195, 28.6429],
@@ -343,50 +164,11 @@ const TRAINS_DATABASE: Record<string, TrainRouteData> = {
   },
 };
 
-// Also support 12002 and 12626
-TRAINS_DATABASE['12002'] = {
-  train: {
-    id: 'train_12002',
-    trainNumber: '12002',
-    name: 'New Delhi - Bhopal Shatabdi Express',
-    type: 'Shatabdi Express',
-    source: { code: 'NDLS', name: 'New Delhi' },
-    destination: { code: 'RKMP', name: 'Rani Kamlapati' },
-    totalDistanceKm: 708,
-    totalDurationMinutes: 510,
-    operatingDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-    route: [
-      { code: 'NDLS', name: 'New Delhi', scheduledDeparture: '06:00' },
-      { code: 'MTJ', name: 'Mathura Junction', scheduledArrival: '07:19', scheduledDeparture: '07:20' },
-      { code: 'AGC', name: 'Agra Cantt', scheduledArrival: '07:50', scheduledDeparture: '07:55' },
-      { code: 'GWL', name: 'Gwalior Junction', scheduledArrival: '09:23', scheduledDeparture: '09:28' },
-      { code: 'VGLJ', name: 'VGL Jhansi Junction', scheduledArrival: '10:45', scheduledDeparture: '10:53' },
-      { code: 'BPL', name: 'Bhopal Junction', scheduledArrival: '14:07', scheduledDeparture: '14:12' },
-      { code: 'RKMP', name: 'Rani Kamlapati', scheduledArrival: '14:30' },
-    ],
-  },
-  stations: [
-    { station: STATIONS_MAP.NDLS, distanceFromSourceKm: 0, scheduledDeparture: '06:00', actualDeparture: '06:00', platform: '1', delayMinutes: 0, status: 'COMPLETED', isHalt: true },
-    { station: STATIONS_MAP.MTJ, distanceFromSourceKm: 141, scheduledArrival: '07:19', scheduledDeparture: '07:20', actualArrival: '07:22', actualDeparture: '07:24', platform: '1', delayMinutes: 4, status: 'COMPLETED', isHalt: true },
-    { station: STATIONS_MAP.AGC, distanceFromSourceKm: 195, scheduledArrival: '07:50', scheduledDeparture: '07:55', actualArrival: '07:58', actualDeparture: '08:02', platform: '1', delayMinutes: 7, status: 'COMPLETED', isHalt: true },
-    { station: STATIONS_MAP.GWL, distanceFromSourceKm: 313, scheduledArrival: '09:23', scheduledDeparture: '09:28', platform: '1', delayMinutes: 5, status: 'CURRENT', isHalt: true },
-    { station: STATIONS_MAP.VGLJ, distanceFromSourceKm: 410, scheduledArrival: '10:45', scheduledDeparture: '10:53', platform: '2', delayMinutes: 8, status: 'UPCOMING', isHalt: true },
-    { station: STATIONS_MAP.BPL, distanceFromSourceKm: 702, scheduledArrival: '14:07', scheduledDeparture: '14:12', platform: '1', delayMinutes: 10, status: 'UPCOMING', isHalt: true },
-    { station: STATIONS_MAP.RKMP, distanceFromSourceKm: 708, scheduledArrival: '14:30', platform: '1', delayMinutes: 10, status: 'UPCOMING', isHalt: true },
-  ],
-  routeCoordinates: [
-    [77.2195, 28.6429],
-    [77.6737, 27.4924],
-    [78.0062, 27.1593],
-    [78.1882, 26.2163],
-    [78.5685, 25.4484],
-    [77.4143, 23.2662],
-    [77.4419, 23.2167],
-  ],
-};
-
-// Client-side Direct RailRadar fetch helper (with fallback to TRAINS_DATABASE)
 const RAILRADAR_KEY = 'rg_ff60afba90bf47d3bcb6c39f7920d3e0';
+
+// In-memory client caches
+const scheduleCache = new Map<string, any>();
+const liveCache = new Map<string, { data: any; ts: number }>();
 
 async function fetchFromRailRadarDirect(endpoint: string) {
   try {
@@ -399,19 +181,46 @@ async function fetchFromRailRadarDirect(endpoint: string) {
       return await res.json();
     }
   } catch {
-    // ignore
+    // network failure / offline
   }
   return null;
+}
+
+async function getOrFetchSchedule(trainNumber: string) {
+  if (scheduleCache.has(trainNumber)) {
+    return scheduleCache.get(trainNumber);
+  }
+  const resp = await fetchFromRailRadarDirect(`/trains/${trainNumber}`);
+  if (resp?.data) {
+    scheduleCache.set(trainNumber, resp.data);
+    return resp.data;
+  }
+  return null;
+}
+
+async function getOrFetchLive(trainNumber: string) {
+  const cached = liveCache.get(trainNumber);
+  if (cached && Date.now() - cached.ts < 15000) {
+    return cached.data;
+  }
+  const resp = await fetchFromRailRadarDirect(`/trains/${trainNumber}/live`);
+  if (resp?.data) {
+    liveCache.set(trainNumber, { data: resp.data, ts: Date.now() });
+    return resp.data;
+  }
+  return cached?.data || null;
 }
 
 export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
   const clean = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
   const parts = clean.split('?')[0].split('/');
 
-  // 1. Search: trains/search?q=...
+  // 1. Search Trains: trains/search?q=...
   if (parts[0] === 'trains' && parts[1] === 'search') {
-    const query = new URLSearchParams(endpoint.split('?')[1] || '').get('q')?.toLowerCase() || '';
-    const results: TrainSearchResult[] = Object.values(TRAINS_DATABASE)
+    const query = new URLSearchParams(endpoint.split('?')[1] || '').get('q')?.trim().toLowerCase() || '';
+
+    // Search local database
+    const localResults: TrainSearchResult[] = Object.values(TRAINS_DATABASE)
       .filter(
         (td) =>
           td.train.trainNumber.includes(query) ||
@@ -430,78 +239,140 @@ export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
         currentDelayMinutes: 0,
       }));
 
-    if (results.length === 0 && query.length >= 3) {
-      // Try direct RailRadar search
-      const rr = await fetchFromRailRadarDirect(`/trains?q=${encodeURIComponent(query)}`);
-      if (rr?.data && Array.isArray(rr.data)) {
-        return rr.data.map((t: any) => ({
-          trainNumber: t.trainNumber,
-          name: t.trainName,
-          source: t.source?.stationName || '',
-          sourceCode: t.source?.stationCode || '',
-          destination: t.destination?.stationName || '',
-          destinationCode: t.destination?.stationCode || '',
-          status: 'ON TIME' as const,
-          currentDelayMinutes: 0,
-        })) as unknown as T;
+    // If exact or partial train number (or text search): query live RailRadar API!
+    if (/^\d{3,5}$/.test(query) || query.length >= 3) {
+      // Check if not already in local results
+      const exists = localResults.some((r) => r.trainNumber === query);
+      if (!exists) {
+        const liveSched = await getOrFetchSchedule(query);
+        if (liveSched?.train) {
+          const t = liveSched.train;
+          const r = liveSched.route || [];
+          const firstStop = r[0];
+          const lastStop = r[r.length - 1];
+
+          localResults.unshift({
+            trainNumber: t.number || query,
+            name: t.name || `Train ${query}`,
+            source: t.source?.name || firstStop?.station?.name || 'Origin',
+            sourceCode: t.source?.code || firstStop?.station?.code || 'ORIGIN',
+            destination: t.destination?.name || lastStop?.station?.name || 'Destination',
+            destinationCode: t.destination?.code || lastStop?.station?.code || 'DEST',
+            departureTime: firstStop?.departure,
+            arrivalTime: lastStop?.arrival,
+            status: 'ON TIME' as const,
+            currentDelayMinutes: 0,
+          });
+        }
       }
     }
-    return results as unknown as T;
+
+    return localResults as unknown as T;
   }
 
   // Train specific endpoints
   const trainNumber = parts[1] || '12951';
   const sub = parts[2];
+
+  // Try live schedule from RailRadar first
+  const liveSched = await getOrFetchSchedule(trainNumber);
   const dbData = TRAINS_DATABASE[trainNumber] || TRAINS_DATABASE['12951'];
 
   // 2. Train Details: trains/:trainNumber
   if (parts[0] === 'trains' && parts.length === 2) {
+    if (liveSched?.train) {
+      const t = liveSched.train;
+      const halts = (liveSched.route || []).filter((s: any) => s.isHalt);
+      const mappedTrain: Train = {
+        id: `train_${t.number}`,
+        trainNumber: t.number,
+        name: t.name,
+        type: t.type || 'Express',
+        source: { code: t.source?.code || '', name: t.source?.name || '' },
+        destination: { code: t.destination?.code || '', name: t.destination?.name || '' },
+        totalDistanceKm: Math.round(t.distance || 1000),
+        totalDurationMinutes: t.duration || 720,
+        operatingDays: t.runDays || ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        route: halts.map((s: any) => ({
+          code: s.station?.code || '',
+          name: s.station?.name || '',
+          scheduledArrival: s.arrival,
+          scheduledDeparture: s.departure,
+          platform: s.platform,
+        })),
+      };
+      return mappedTrain as unknown as T;
+    }
     return dbData.train as unknown as T;
   }
 
   // 3. Live Status: trains/:trainNumber/live
   if (parts[0] === 'trains' && sub === 'live') {
-    // Try live fetch from RailRadar directly
-    const rrLive = await fetchFromRailRadarDirect(`/trains/${trainNumber}/live`);
-    if (rrLive?.data) {
-      const d = rrLive.data;
+    const liveData = await getOrFetchLive(trainNumber);
+    if (liveData && liveSched) {
+      const d = liveData;
       const currentLoc = d.currentLocation;
-      const delay = Math.round(d.delay || 0);
+      const delay = Math.round(d.delayMinutes ?? d.delay ?? 0);
+      const runStatus: RunningStatus = delay > 5 ? 'DELAYED' : 'ON TIME';
 
-      const lat = currentLoc?.lat || 23.3441;
-      const lng = currentLoc?.lng || 75.0371;
+      // Find current stop coords from schedule sequence
+      let lat = currentLoc?.lat || 28.6429;
+      let lng = currentLoc?.lng || 77.2195;
+      let speedKmph = currentLoc?.speed || 83;
+      let bearing = 0;
 
-      return {
-        trainNumber: d.trainNumber,
-        trainName: d.trainName,
-        status: d.status === 'running' ? 'ON TIME' : 'DELAYED',
+      if (currentLoc?.sequence && liveSched.route) {
+        const curStop = liveSched.route.find((s: any) => s.sequence === currentLoc.sequence);
+        const nextStop = liveSched.route.find((s: any) => s.sequence === currentLoc.sequence + 1);
+        if (curStop?.station) {
+          lat = curStop.station.lat;
+          lng = curStop.station.lng;
+        }
+        if (curStop?.station && nextStop?.station) {
+          const dLat = nextStop.station.lat - curStop.station.lat;
+          const dLng = nextStop.station.lng - curStop.station.lng;
+          bearing = Math.round((Math.atan2(dLng, dLat) * 180) / Math.PI + 360) % 360;
+          const seg = Math.max(0, Math.min(1, currentLoc.segmentProgress || 0));
+          lat = curStop.station.lat + dLat * seg;
+          lng = curStop.station.lng + dLng * seg;
+        }
+      }
+
+      const totalDist = Math.round(liveSched.train?.distance || 1386);
+      const covered = Math.round(currentLoc?.distanceFromOriginKm || d.previousHalt?.distance || 0);
+
+      const liveStatus: LiveTrainStatus = {
+        trainNumber: d.trainNumber || trainNumber,
+        trainName: liveSched.train?.name || d.trainName || `Train ${trainNumber}`,
+        status: runStatus,
         delayMinutes: delay,
         currentStation: {
-          code: currentLoc?.stationCode || 'RTM',
-          name: currentLoc?.stationName ? `${currentLoc.stationName} (Passed)` : 'Ratlam Jn (Passed)',
+          code: currentLoc?.stationCode || d.previousHalt?.stationCode || '',
+          name: currentLoc?.stationName ? `${currentLoc.stationName} (Passed)` : 'In Transit',
         },
         nextStation: {
-          code: d.nextHalt?.stationCode || 'RTM',
-          name: d.nextHalt?.stationName || 'Ratlam Jn',
-          platform: '5',
-          scheduledArrival: '00:25',
+          code: d.nextHalt?.stationCode || '',
+          name: d.nextHalt?.stationName || 'Next Halt',
+          platform: '1',
+          scheduledArrival: '—',
         },
         location: {
-          lat,
-          lng,
-          bearing: 42,
-          speedKmph: currentLoc?.speed || 83,
+          lat: Number(lat.toFixed(5)),
+          lng: Number(lng.toFixed(5)),
+          bearing,
+          speedKmph,
           isInterpolated: true,
         },
-        progressPercentage: Math.min(100, Math.round(((d.currentLocation?.distanceFromOriginKm || 650) / 1386) * 100)),
-        distanceCoveredKm: Math.round(d.currentLocation?.distanceFromOriginKm || 650),
-        distanceRemainingKm: Math.max(0, 1386 - Math.round(d.currentLocation?.distanceFromOriginKm || 650)),
-        etaNextStation: '00:43',
-        etaDestination: '08:45',
-        delayTrend: 'STABLE',
+        progressPercentage: totalDist > 0 ? Math.min(100, Math.round((covered / totalDist) * 100)) : 50,
+        distanceCoveredKm: covered,
+        distanceRemainingKm: Math.max(0, totalDist - covered),
+        etaNextStation: 'On Time',
+        etaDestination: 'On Time',
+        delayTrend: delay > 10 ? 'INCREASING' : 'STABLE',
         lastUpdatedAt: new Date().toISOString(),
         isStale: false,
-      } as unknown as T;
+      };
+      return liveStatus as unknown as T;
     }
 
     // Database fallback
@@ -510,23 +381,9 @@ export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
       trainName: dbData.train.name,
       status: 'ON TIME' as const,
       delayMinutes: 18,
-      currentStation: {
-        code: 'RTM',
-        name: 'Ratlam Junction (Passed)',
-      },
-      nextStation: {
-        code: 'RTM',
-        name: 'Ratlam Junction',
-        platform: '5',
-        scheduledArrival: '00:25',
-      },
-      location: {
-        lat: 23.3441,
-        lng: 75.0371,
-        bearing: 38,
-        speedKmph: 85,
-        isInterpolated: true,
-      },
+      currentStation: { code: 'RTM', name: 'Ratlam Junction (Passed)' },
+      nextStation: { code: 'RTM', name: 'Ratlam Junction', platform: '5', scheduledArrival: '00:25' },
+      location: { lat: 23.3441, lng: 75.0371, bearing: 38, speedKmph: 85, isInterpolated: true },
       progressPercentage: 47,
       distanceCoveredKm: 653,
       distanceRemainingKm: 733,
@@ -540,69 +397,85 @@ export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
 
   // 4. Route Geometry: trains/:trainNumber/route
   if (parts[0] === 'trains' && sub === 'route') {
-    const coords = dbData.routeCoordinates;
-    const splitIdx = Math.floor(coords.length * 0.45);
-    const completedCoords = coords.slice(0, splitIdx + 2);
-    const remainingCoords = coords.slice(splitIdx);
+    if (liveSched?.route) {
+      const allStops = liveSched.route.filter((s: any) => s.station?.lat && s.station?.lng);
+      const coords: [number, number][] = allStops.map((s: any) => [s.station.lng, s.station.lat]);
+      const splitIdx = Math.floor(coords.length * 0.4);
 
-    const features: any[] = [
-      {
-        type: 'Feature',
-        properties: { segment: 'completed', trainNumber },
-        geometry: { type: 'LineString', coordinates: completedCoords },
-      },
-      {
-        type: 'Feature',
-        properties: { segment: 'remaining', trainNumber },
-        geometry: { type: 'LineString', coordinates: remainingCoords },
-      },
-    ];
-
-    // Add stations as points (both halts and intermediate dots)
-    dbData.stations.forEach((st, idx) => {
-      features.push({
-        type: 'Feature',
-        properties: {
-          code: st.station.code,
-          name: st.station.name,
-          isHalt: true,
-          stationType: 'halt',
-          status: st.status,
-          platform: st.platform,
+      const features: any[] = [
+        {
+          type: 'Feature',
+          properties: { segment: 'completed', trainNumber },
+          geometry: { type: 'LineString', coordinates: coords.slice(0, splitIdx + 2) },
         },
-        geometry: {
-          type: 'Point',
-          coordinates: [st.station.longitude, st.station.latitude],
+        {
+          type: 'Feature',
+          properties: { segment: 'remaining', trainNumber },
+          geometry: { type: 'LineString', coordinates: coords.slice(splitIdx) },
         },
-      });
+      ];
 
-      // Add intermediate waypoint dots between halts
-      if (idx < dbData.stations.length - 1) {
-        const nextSt = dbData.stations[idx + 1];
-        const midLng = (st.station.longitude + nextSt.station.longitude) / 2;
-        const midLat = (st.station.latitude + nextSt.station.latitude) / 2;
+      // Add all stations (both halts and intermediate dots)
+      allStops.forEach((stop: any, idx: number) => {
+        const isHalt = Boolean(stop.isHalt);
         features.push({
           type: 'Feature',
           properties: {
-            code: `${st.station.code}-W`,
-            name: `${st.station.name} Wayside`,
-            isHalt: false,
-            stationType: 'intermediate',
-            status: st.status === 'COMPLETED' ? 'COMPLETED' : 'UPCOMING',
+            code: stop.station.code,
+            name: stop.station.name,
+            isHalt,
+            stationType: isHalt ? 'halt' : 'intermediate',
+            status: idx <= splitIdx ? 'COMPLETED' : 'UPCOMING',
+            platform: stop.platform,
           },
           geometry: {
             type: 'Point',
-            coordinates: [midLng, midLat],
+            coordinates: [stop.station.lng, stop.station.lat],
           },
         });
-      }
-    });
+      });
 
+      return { type: 'FeatureCollection', features } as unknown as T;
+    }
+
+    // Fallback GeoJSON
+    const coords = dbData.routeCoordinates;
+    const splitIdx = Math.floor(coords.length * 0.45);
+    const features: any[] = [
+      { type: 'Feature', properties: { segment: 'completed', trainNumber }, geometry: { type: 'LineString', coordinates: coords.slice(0, splitIdx + 2) } },
+      { type: 'Feature', properties: { segment: 'remaining', trainNumber }, geometry: { type: 'LineString', coordinates: coords.slice(splitIdx) } },
+    ];
+    dbData.stations.forEach((st) => {
+      features.push({
+        type: 'Feature',
+        properties: { code: st.station.code, name: st.station.name, isHalt: true, stationType: 'halt', status: st.status, platform: st.platform },
+        geometry: { type: 'Point', coordinates: [st.station.longitude, st.station.latitude] },
+      });
+    });
     return { type: 'FeatureCollection', features } as unknown as T;
   }
 
   // 5. Timeline: trains/:trainNumber/timeline
   if (parts[0] === 'trains' && sub === 'timeline') {
+    if (liveSched?.route) {
+      const halts = liveSched.route.filter((s: any) => s.isHalt && s.station);
+      const stations: JourneyStation[] = halts.map((s: any, idx: number) => ({
+        station: {
+          code: s.station.code,
+          name: s.station.name,
+          latitude: s.station.lat,
+          longitude: s.station.lng,
+        },
+        distanceFromSourceKm: Math.round(s.distance || 0),
+        scheduledArrival: s.arrival,
+        scheduledDeparture: s.departure,
+        platform: s.platform,
+        delayMinutes: 0,
+        status: idx < 3 ? 'COMPLETED' : idx === 3 ? 'CURRENT' : 'UPCOMING',
+        isHalt: true,
+      }));
+      return stations as unknown as T;
+    }
     return dbData.stations as unknown as T;
   }
 
@@ -610,18 +483,16 @@ export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
   if (parts[0] === 'trains' && sub === 'elevation') {
     return {
       profile: [
-        { distanceKm: 0, elevationMeters: 14, stationCode: 'MMCT', stationName: 'Mumbai Central' },
-        { distanceKm: 30, elevationMeters: 18, stationCode: 'BVI', stationName: 'Borivali' },
-        { distanceKm: 263, elevationMeters: 13, stationCode: 'ST', stationName: 'Surat' },
-        { distanceKm: 392, elevationMeters: 36, stationCode: 'BRC', stationName: 'Vadodara Junction' },
-        { distanceKm: 653, elevationMeters: 493, stationCode: 'RTM', stationName: 'Ratlam Junction' },
-        { distanceKm: 920, elevationMeters: 271, stationCode: 'KOTA', stationName: 'Kota Junction' },
-        { distanceKm: 1386, elevationMeters: 216, stationCode: 'NDLS', stationName: 'New Delhi' },
+        { distanceKm: 0, elevationMeters: 14, stationCode: 'MMCT', stationName: 'Origin' },
+        { distanceKm: 300, elevationMeters: 150, stationCode: 'ST', stationName: 'Way 1' },
+        { distanceKm: 650, elevationMeters: 493, stationCode: 'RTM', stationName: 'Central Plateau' },
+        { distanceKm: 1000, elevationMeters: 271, stationCode: 'KOTA', stationName: 'Way 2' },
+        { distanceKm: 1386, elevationMeters: 216, stationCode: 'NDLS', stationName: 'Destination' },
       ],
       currentElevationMeters: 493,
       highestElevationMeters: 512,
-      lowestElevationMeters: 13,
-      elevationGainMeters: 499,
+      lowestElevationMeters: 14,
+      elevationGainMeters: 498,
     } as unknown as T;
   }
 
@@ -641,7 +512,7 @@ export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
   if (parts[0] === 'trains' && sub === 'weather') {
     const routeWeather: RouteWeather = {
       currentStationWeather: {
-        stationName: 'Ratlam Junction',
+        stationName: 'Current Location',
         latitude: 23.3441,
         longitude: 75.0371,
         temperature: 29,
@@ -653,7 +524,7 @@ export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
         updatedAt: new Date().toISOString(),
       },
       nextStationWeather: {
-        stationName: 'Kota Junction',
+        stationName: 'Next Station',
         latitude: 25.2138,
         longitude: 75.8648,
         temperature: 28,
@@ -665,7 +536,7 @@ export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
         updatedAt: new Date().toISOString(),
       },
       destinationWeather: {
-        stationName: 'New Delhi',
+        stationName: 'Destination',
         latitude: 28.6429,
         longitude: 77.2195,
         temperature: 24,
@@ -686,39 +557,30 @@ export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
     const places: GeographicPlace[] = [
       {
         id: 'poi-1',
-        name: 'Chhatrapati Shivaji Maharaj Terminus & Gateway of India',
+        name: 'Heritage Railway Corridor Landmark',
         type: 'MONUMENT',
         latitude: 18.9400,
         longitude: 72.8353,
         distanceFromRouteKm: 3.5,
-        description: 'UNESCO World Heritage site and Victorian Gothic historic terminal.',
+        description: 'Historic station architectural marvel connecting interstate networks.',
       },
       {
         id: 'poi-2',
-        name: 'Sanjay Gandhi National Park',
+        name: 'National Forest & Natural Landmark',
         type: 'MOUNTAIN',
         latitude: 19.2215,
         longitude: 72.9124,
         distanceFromRouteKm: 4.2,
-        description: 'Sprawling protected forest within Mumbai metropolis limits with ancient Kanheri caves.',
+        description: 'Protected forest expanse along the railway lines.',
       },
       {
         id: 'poi-3',
-        name: 'Tapi River Basin',
+        name: 'River Basin Bridge Crossing',
         type: 'RIVER',
         latitude: 21.2185,
         longitude: 72.8360,
         distanceFromRouteKm: 1.2,
-        description: 'Major Central India river flowing westward into the Arabian Sea.',
-      },
-      {
-        id: 'poi-4',
-        name: 'Malwa Plateau & Ratlam Rail Hub',
-        type: 'CITY',
-        latitude: 23.3315,
-        longitude: 75.0367,
-        distanceFromRouteKm: 0.8,
-        description: 'High volcanic fertile plateau and major railway junction connecting Delhi-Mumbai.',
+        description: 'Major river crossing engineered across tidal waters.',
       },
     ];
     return places as unknown as T;
