@@ -57,7 +57,7 @@ const DEFAULT_RECENT_TRAINS: TrainSearchResult[] = [
   },
 ];
 
-export const Home: React.FC = () => {
+export const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const searchInputRef = useRef<HTMLInputElement>(null);
   const { searchTerm, setSearchTerm, debouncedTerm, results, isLoading } = useTrainSearch(300);

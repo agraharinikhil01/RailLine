@@ -70,7 +70,7 @@ const CircularProgressRing: React.FC<{ percentage: number }> = ({ percentage }) 
   );
 };
 
-export const Journey: React.FC = () => {
+export const TrackingPage: React.FC = () => {
   const { trainNumber = '' } = useParams<{ trainNumber: string }>();
 
   // Tab State matching screenshot 1

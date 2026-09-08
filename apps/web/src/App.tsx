@@ -2,8 +2,8 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Header } from './components/layout/Header';
-import { Home } from './pages/Home';
-import { Journey } from './pages/Journey';
+import { HomePage } from './pages/HomePage';
+import { TrackingPage } from './pages/TrackingPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -28,16 +28,14 @@ export const App: React.FC = () => {
           <Header />
           <div className="flex-1">
             <Routes>
-              {/* 1. Home / Search Screen */}
-              <Route path="/" element={<Home />} />
+              {/* Route 1: Home/Search Screen */}
+              <Route path="/" element={<HomePage />} />
 
-              {/* 2. Train Tracking Screen */}
-              <Route path="/tracking/:trainNumber" element={<Journey />} />
+              {/* Route 2: Train Tracking Screen */}
+              <Route path="/tracking/:trainNumber" element={<TrackingPage />} />
 
-              {/* Legacy Redirect */}
+              {/* Legacy fallback */}
               <Route path="/journey/:trainNumber" element={<LegacyJourneyRedirect />} />
-
-              {/* Fallback */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </div>
