@@ -1,4 +1,5 @@
 import { ApiError } from '@railline/types';
+import { clientFallbackHandler } from './clientFallback';
 
 export class FetchError extends Error {
   public code: string;
@@ -15,23 +16,27 @@ export class FetchError extends Error {
 export async function apiClient<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const url = endpoint.startsWith('http') ? endpoint : `/api/v1${endpoint}`;
 
-  const response = await fetch(url, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options?.headers,
-    },
-  });
+  try {
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers,
+      },
+    });
 
-  const data = await response.json();
-
-  if (!response.ok || data.error) {
-    const error = data.error || {
-      code: 'REQUEST_FAILED',
-      message: `Request failed with status ${response.status}`,
-    };
-    throw new FetchError(error);
+    const contentType = response.headers.get('content-type') || '';
+    if (response.ok && contentType.includes('application/json')) {
+      const data = await response.json();
+      if (!data.error) {
+        return (data.data !== undefined ? data.data : data) as T;
+      }
+    }
+  } catch {
+    // If backend is not reached or network error, proceed to client fallback
   }
 
-  return (data.data !== undefined ? data.data : data) as T;
+  // Graceful client-side fallback (direct RailRadar API / local database)
+  // Ensures Vercel static deployments never show "Unable to track train"
+  return clientFallbackHandler<T>(endpoint);
 }
