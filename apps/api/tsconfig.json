@@ -3,13 +3,14 @@
     "target": "ES2022",
     "module": "CommonJS",
     "moduleResolution": "node",
+    "rootDir": "./src",
     "outDir": "./dist",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "paths": {
-      "@railline/types": ["../../packages/types/src", "../../packages/types/dist"]
+      "@railline/types": ["../../packages/types/dist"]
     }
   },
   "include": ["src/**/*"]

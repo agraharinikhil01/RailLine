@@ -601,14 +601,94 @@ const TRAINS_DATABASE: Record<string, TrainRouteData> = {
   },
 };
 
+interface SearchCatalogEntry {
+  trainNumber: string;
+  name: string;
+  source: string;
+  sourceCode: string;
+  destination: string;
+  destinationCode: string;
+  departureTime: string;
+  arrivalTime: string;
+  runningDays: string[];
+}
+
+const POPULAR_SEARCH_CATALOG: SearchCatalogEntry[] = [
+  { trainNumber: '15566', name: 'Vaishali Express', source: 'New Delhi', sourceCode: 'NDLS', destination: 'Lalit Gram', destinationCode: 'LLP', departureTime: '20:40', arrivalTime: '22:45', runningDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
+  { trainNumber: '15565', name: 'Vaishali Express', source: 'Lalit Gram', sourceCode: 'LLP', destination: 'New Delhi', destinationCode: 'NDLS', departureTime: '06:15', arrivalTime: '08:45', runningDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
+  { trainNumber: '12951', name: 'Mumbai Rajdhani Express', source: 'Mumbai Central', sourceCode: 'MMCT', destination: 'New Delhi', destinationCode: 'NDLS', departureTime: '17:00', arrivalTime: '08:32', runningDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
+  { trainNumber: '12952', name: 'New Delhi Mumbai Rajdhani', source: 'New Delhi', sourceCode: 'NDLS', destination: 'Mumbai Central', destinationCode: 'MMCT', departureTime: '16:55', arrivalTime: '08:35', runningDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
+  { trainNumber: '22436', name: 'Vande Bharat Express', source: 'New Delhi', sourceCode: 'NDLS', destination: 'Varanasi Junction', destinationCode: 'BSB', departureTime: '06:00', arrivalTime: '14:00', runningDays: ['Tue', 'Wed', 'Fri', 'Sat', 'Sun'] },
+  { trainNumber: '22435', name: 'Varanasi New Delhi Vande Bharat', source: 'Varanasi Junction', sourceCode: 'BSB', destination: 'New Delhi', destinationCode: 'NDLS', departureTime: '15:00', arrivalTime: '23:00', runningDays: ['Tue', 'Wed', 'Fri', 'Sat', 'Sun'] },
+  { trainNumber: '12002', name: 'Bhopal Shatabdi Express', source: 'New Delhi', sourceCode: 'NDLS', destination: 'Rani Kamlapati', destinationCode: 'RKMP', departureTime: '06:00', arrivalTime: '14:30', runningDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
+  { trainNumber: '12001', name: 'Bhopal New Delhi Shatabdi', source: 'Rani Kamlapati', sourceCode: 'RKMP', destination: 'New Delhi', destinationCode: 'NDLS', departureTime: '15:15', arrivalTime: '23:50', runningDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
+  { trainNumber: '12004', name: 'Lucknow Shatabdi Express', source: 'New Delhi', sourceCode: 'NDLS', destination: 'Lucknow Junction', destinationCode: 'LJN', departureTime: '06:10', arrivalTime: '12:45', runningDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
+  { trainNumber: '12003', name: 'Lucknow New Delhi Shatabdi', source: 'Lucknow Junction', sourceCode: 'LJN', destination: 'New Delhi', destinationCode: 'NDLS', departureTime: '15:30', arrivalTime: '22:15', runningDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
+  { trainNumber: '12301', name: 'Howrah Rajdhani Express', source: 'Howrah Junction', sourceCode: 'HWH', destination: 'New Delhi', destinationCode: 'NDLS', departureTime: '16:50', arrivalTime: '10:05', runningDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] },
+  { trainNumber: '12302', name: 'New Delhi Howrah Rajdhani', source: 'New Delhi', sourceCode: 'NDLS', destination: 'Howrah Junction', destinationCode: 'HWH', departureTime: '16:55', arrivalTime: '09:55', runningDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Sat', 'Sun'] },
+  { trainNumber: '12424', name: 'Dibrugarh Rajdhani Express', source: 'New Delhi', sourceCode: 'NDLS', destination: 'Dibrugarh', destinationCode: 'DBRG', departureTime: '16:20', arrivalTime: '07:00', runningDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
+  { trainNumber: '12423', name: 'Dibrugarh New Delhi Rajdhani', source: 'Dibrugarh', sourceCode: 'DBRG', destination: 'New Delhi', destinationCode: 'NDLS', departureTime: '20:55', arrivalTime: '10:30', runningDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
+  { trainNumber: '12626', name: 'Kerala Express', source: 'New Delhi', sourceCode: 'NDLS', destination: 'Thiruvananthapuram Central', destinationCode: 'TVC', departureTime: '20:10', arrivalTime: '22:10', runningDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
+  { trainNumber: '12625', name: 'Kerala Superfast Express', source: 'Thiruvananthapuram Central', sourceCode: 'TVC', destination: 'New Delhi', destinationCode: 'NDLS', departureTime: '12:30', arrivalTime: '13:45', runningDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
+  { trainNumber: '12555', name: 'Gorakhdham Express', source: 'Gorakhpur Junction', sourceCode: 'GKP', destination: 'Hisar', destinationCode: 'HSR', departureTime: '16:35', arrivalTime: '10:00', runningDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
+  { trainNumber: '12556', name: 'Gorakhdham Superfast', source: 'Hisar', sourceCode: 'HSR', destination: 'Gorakhpur Junction', destinationCode: 'GKP', departureTime: '17:00', arrivalTime: '09:45', runningDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
+  { trainNumber: '12565', name: 'Bihar Sampark Kranti Express', source: 'Darbhanga Junction', sourceCode: 'DBG', destination: 'New Delhi', destinationCode: 'NDLS', departureTime: '08:25', arrivalTime: '05:15', runningDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
+  { trainNumber: '12566', name: 'Bihar Sampark Kranti Superfast', source: 'New Delhi', sourceCode: 'NDLS', destination: 'Darbhanga Junction', destinationCode: 'DBG', departureTime: '13:00', arrivalTime: '09:30', runningDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
+  { trainNumber: '12393', name: 'Sampoorna Kranti Express', source: 'Rajendra Nagar Terminal', sourceCode: 'RJPB', destination: 'New Delhi', destinationCode: 'NDLS', departureTime: '19:25', arrivalTime: '07:55', runningDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
+  { trainNumber: '12394', name: 'Sampoorna Kranti Superfast', source: 'New Delhi', sourceCode: 'NDLS', destination: 'Rajendra Nagar Terminal', destinationCode: 'RJPB', departureTime: '17:30', arrivalTime: '06:50', runningDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
+  { trainNumber: '12801', name: 'Purushottam Express', source: 'Puri', sourceCode: 'PURI', destination: 'New Delhi', destinationCode: 'NDLS', departureTime: '21:55', arrivalTime: '04:00', runningDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
+  { trainNumber: '12802', name: 'Purushottam Superfast', source: 'New Delhi', sourceCode: 'NDLS', destination: 'Puri', destinationCode: 'PURI', departureTime: '22:40', arrivalTime: '05:25', runningDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
+  { trainNumber: '12259', name: 'Sealdah Bikaner Duronto', source: 'Sealdah', sourceCode: 'SDAH', destination: 'Bikaner Junction', destinationCode: 'BKN', departureTime: '17:00', arrivalTime: '18:15', runningDays: ['Mon', 'Wed', 'Thu', 'Sun'] },
+  { trainNumber: '12618', name: 'Mangala Lakshadweep Express', source: 'H. Nizamuddin', sourceCode: 'NZM', destination: 'Ernakulam Junction', destinationCode: 'ERS', departureTime: '05:40', arrivalTime: '07:30', runningDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
+  { trainNumber: '12138', name: 'Punjab Mail', source: 'Firozpur Cantt', sourceCode: 'FZR', destination: 'Mumbai CSMT', destinationCode: 'CSMT', departureTime: '21:45', arrivalTime: '07:35', runningDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
+  { trainNumber: '11020', name: 'Konark Express', source: 'Bhubaneswar', sourceCode: 'BBS', destination: 'Mumbai CSMT', destinationCode: 'CSMT', departureTime: '15:20', arrivalTime: '03:55', runningDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
+  { trainNumber: '12724', name: 'Telangana Express', source: 'New Delhi', sourceCode: 'NDLS', destination: 'Hyderabad Deccan', destinationCode: 'HYB', departureTime: '16:00', arrivalTime: '17:10', runningDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
+  { trainNumber: '12296', name: 'Sanghamitra Express', source: 'Danapur', sourceCode: 'DNR', destination: 'SMVT Bengaluru', destinationCode: 'SMVB', departureTime: '20:15', arrivalTime: '16:10', runningDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
+  { trainNumber: '12926', name: 'Paschim Express', source: 'Amritsar Junction', sourceCode: 'ASR', destination: 'Mumbai Central', destinationCode: 'MMCT', departureTime: '07:20', arrivalTime: '14:55', runningDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
+  { trainNumber: '14206', name: 'Ayodhya Express', source: 'Delhi Junction', sourceCode: 'DLI', destination: 'Ayodhya Cantt', destinationCode: 'AYC', departureTime: '18:20', arrivalTime: '07:15', runningDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
+  { trainNumber: '12230', name: 'Lucknow Mail', source: 'New Delhi', sourceCode: 'NDLS', destination: 'Lucknow Junction', destinationCode: 'LJN', departureTime: '22:00', arrivalTime: '06:50', runningDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
+  { trainNumber: '20901', name: 'Mumbai Gandhinagar Vande Bharat', source: 'Mumbai Central', sourceCode: 'MMCT', destination: 'Gandhinagar Capital', destinationCode: 'GNC', departureTime: '06:10', arrivalTime: '12:25', runningDays: ['Mon', 'Tue', 'Thu', 'Fri', 'Sat', 'Sun'] },
+  { trainNumber: '22439', name: 'Vande Bharat Katra Express', source: 'New Delhi', sourceCode: 'NDLS', destination: 'SMVD Katra', destinationCode: 'SVDK', departureTime: '06:00', arrivalTime: '14:00', runningDays: ['Mon', 'Tue', 'Wed', 'Fri', 'Sat', 'Sun'] },
+];
+
 export class MockTrainProvider implements TrainProvider {
   async searchTrains(query: string): Promise<TrainSearchResult[]> {
     const q = query.trim().toLowerCase();
     if (!q || q.length < 2) return [];
 
     const results: TrainSearchResult[] = [];
+    const seen = new Set<string>();
 
+    // 1. Search POPULAR_SEARCH_CATALOG
+    for (const item of POPULAR_SEARCH_CATALOG) {
+      const matchNumber = item.trainNumber.includes(q);
+      const matchName = item.name.toLowerCase().includes(q);
+      const matchSource = item.source.toLowerCase().includes(q) || item.sourceCode.toLowerCase().includes(q);
+      const matchDest = item.destination.toLowerCase().includes(q) || item.destinationCode.toLowerCase().includes(q);
+
+      if (matchNumber || matchName || matchSource || matchDest) {
+        if (!seen.has(item.trainNumber)) {
+          seen.add(item.trainNumber);
+          results.push({
+            trainNumber: item.trainNumber,
+            name: item.name,
+            source: item.source,
+            sourceCode: item.sourceCode,
+            destination: item.destination,
+            destinationCode: item.destinationCode,
+            departureTime: item.departureTime,
+            arrivalTime: item.arrivalTime,
+            runningDays: item.runningDays,
+            status: 'ON TIME',
+            currentDelayMinutes: 0,
+          });
+        }
+      }
+    }
+
+    // 2. Search TRAINS_DATABASE for any additional trains
     for (const [trainNumber, data] of Object.entries(TRAINS_DATABASE)) {
+      if (seen.has(trainNumber)) continue;
       const train = data.train;
       const matchNumber = train.trainNumber.includes(q);
       const matchName = train.name.toLowerCase().includes(q);
@@ -616,6 +696,7 @@ export class MockTrainProvider implements TrainProvider {
       const matchDest = train.destination.name.toLowerCase().includes(q);
 
       if (matchNumber || matchName || matchSource || matchDest) {
+        seen.add(train.trainNumber);
         results.push({
           trainNumber: train.trainNumber,
           name: train.name,
@@ -626,8 +707,8 @@ export class MockTrainProvider implements TrainProvider {
           departureTime: train.route[0]?.scheduledDeparture,
           arrivalTime: train.route[train.route.length - 1]?.scheduledArrival,
           runningDays: train.operatingDays,
-          status: 'DELAYED',
-          currentDelayMinutes: 12,
+          status: 'ON TIME',
+          currentDelayMinutes: 0,
         });
       }
     }

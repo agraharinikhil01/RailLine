@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { trainApi } from '../services/trainService';
 import { TrainSearchResult } from '@railline/types';
 
-export function useTrainSearch(debounceMs = 300) {
+export function useTrainSearch(debounceMs = 200) {
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedTerm, setDebouncedTerm] = useState('');
 

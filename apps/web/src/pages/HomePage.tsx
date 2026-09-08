@@ -27,13 +27,27 @@ interface QuickSearchItem {
 }
 
 const QUICK_SEARCH_CHIPS: QuickSearchItem[] = [
+  { number: '15566', name: 'Vaishali Express', label: '15566 (Vaishali)' },
   { number: '12951', name: 'Mumbai Rajdhani Express', label: '12951 (Mumbai Rajdhani)' },
   { number: '22436', name: 'Vande Bharat Express', label: '22436 (Vande Bharat)' },
   { number: '12002', name: 'Bhopal Shatabdi Express', label: '12002 (Bhopal Shatabdi)' },
+  { number: '12301', name: 'Howrah Rajdhani Express', label: '12301 (Howrah Rajdhani)' },
   { number: '12626', name: 'Kerala Express', label: '12626 (Kerala Express)' },
 ];
 
 const DEFAULT_RECENT_TRAINS: TrainSearchResult[] = [
+  {
+    trainNumber: '15566',
+    name: 'Vaishali Express',
+    source: 'New Delhi',
+    sourceCode: 'NDLS',
+    destination: 'Lalit Gram',
+    destinationCode: 'LLP',
+    departureTime: '20:40',
+    arrivalTime: '22:45',
+    status: 'ON TIME',
+    currentDelayMinutes: 0,
+  },
   {
     trainNumber: '12951',
     name: 'Mumbai Rajdhani Express',
@@ -70,24 +84,12 @@ const DEFAULT_RECENT_TRAINS: TrainSearchResult[] = [
     status: 'ON TIME',
     currentDelayMinutes: 0,
   },
-  {
-    trainNumber: '12626',
-    name: 'Kerala Express',
-    source: 'New Delhi',
-    sourceCode: 'NDLS',
-    destination: 'Trivandrum Central',
-    destinationCode: 'TVC',
-    departureTime: '20:10',
-    arrivalTime: '22:10',
-    status: 'DELAYED',
-    currentDelayMinutes: 42,
-  },
 ];
 
 export const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const { searchTerm, setSearchTerm, debouncedTerm, results, isLoading } = useTrainSearch(300);
+  const { searchTerm, setSearchTerm, debouncedTerm, results, isLoading } = useTrainSearch(200);
   const { recentSearches, addRecentSearch, removeRecentSearch, clearRecentSearches } = useRecentSearches();
 
   // Keyboard shortcut: Cmd+K or Ctrl+K focuses the search input
@@ -202,7 +204,7 @@ export const HomePage: React.FC = () => {
               )}
               <button
                 type="submit"
-                className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-xs sm:text-sm font-semibold transition-all shadow-sm shrink-0 active:scale-95"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-xs sm:text-sm font-semibold transition-all shadow-sm shrink-0 active:scale-95 cursor-pointer ml-1"
               >
                 <span>Track</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -253,6 +255,42 @@ export const HomePage: React.FC = () => {
                   </button>
                 </div>
 
+                {/* Instant 5-digit Direct Track Card */}
+                {/^\d{5}$/.test(searchTerm.trim()) && (
+                  <div
+                    onClick={() => {
+                      const matched = results.find((r) => r.trainNumber === searchTerm.trim());
+                      if (matched) {
+                        handleSelectTrain(matched);
+                      } else {
+                        navigate(`/tracking/${searchTerm.trim()}`);
+                      }
+                    }}
+                    className="p-3.5 rounded-xl bg-gradient-to-r from-sky-500 via-blue-600 to-indigo-600 text-white flex items-center justify-between cursor-pointer hover:shadow-md hover:scale-[1.005] active:scale-[0.99] transition-all"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-9 h-9 rounded-lg bg-white/20 backdrop-blur-xs flex items-center justify-center font-mono font-bold text-sm shrink-0">
+                        #{searchTerm.trim()}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="font-bold text-sm flex items-center gap-2 truncate">
+                          <span>{results.find((r) => r.trainNumber === searchTerm.trim())?.name || `Track Train #${searchTerm.trim()}`}</span>
+                          <span className="text-[10px] bg-emerald-400/30 text-emerald-100 border border-emerald-300/40 px-1.5 py-0.5 rounded font-mono font-semibold">LIVE RADAR</span>
+                        </div>
+                        <div className="text-xs text-sky-100 truncate mt-0.5">
+                          {results.find((r) => r.trainNumber === searchTerm.trim())
+                            ? `${results.find((r) => r.trainNumber === searchTerm.trim())?.source} → ${results.find((r) => r.trainNumber === searchTerm.trim())?.destination}`
+                            : 'Click to launch live GPS tracking, speed, and full route map'}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 text-xs font-bold bg-white text-sky-600 px-3.5 py-2 rounded-lg shrink-0 shadow-2xs hover:bg-sky-50 transition-colors ml-3">
+                      <span>Track</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </div>
+                  </div>
+                )}
+
                 {isLoading && (
                   <div className="space-y-2">
                     {[1, 2].map((i) => (
@@ -277,11 +315,31 @@ export const HomePage: React.FC = () => {
                 )}
 
                 {!isLoading && results.length === 0 && (
-                  <EmptyState
-                    icon={Search}
-                    title="No trains found"
-                    description={`No trains matched "${debouncedTerm}". Try a 5-digit number (e.g. 12951, 12301) or a different train name.`}
-                  />
+                  /^\d{5}$/.test(searchTerm.trim()) ? (
+                    <div className="p-6 bg-white border border-slate-200/90 rounded-2xl text-center space-y-3">
+                      <div className="w-12 h-12 rounded-2xl bg-sky-50 text-sky-600 mx-auto flex items-center justify-center">
+                        <Compass className="w-6 h-6 animate-pulse" />
+                      </div>
+                      <h3 className="text-base font-bold text-slate-900">Track Train #{searchTerm.trim()}</h3>
+                      <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                        Live telemetry tracking is ready for train #{searchTerm.trim()}. Click below to view real-time position and route on the map.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/tracking/${searchTerm.trim()}`)}
+                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer"
+                      >
+                        <span>Open Live Radar #{searchTerm.trim()}</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <EmptyState
+                      icon={Search}
+                      title="No trains found"
+                      description={`No trains matched "${debouncedTerm}". Try a 5-digit number (e.g. 15566, 12951, 12301) or a different train name.`}
+                    />
+                  )
                 )}
               </div>
             )}
