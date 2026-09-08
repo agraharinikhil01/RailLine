@@ -33,6 +33,29 @@ const STATION_ELEVATION_METERS: Record<string, number> = {
   HWH: 9,      // Howrah (Hooghly delta)
 };
 
+function getStationElevation(station: { code: string; latitude?: number; longitude?: number }): number {
+  if (STATION_ELEVATION_METERS[station.code]) {
+    return STATION_ELEVATION_METERS[station.code];
+  }
+  const lat = station.latitude || 0;
+  const lng = station.longitude || 0;
+  if (lat && lng) {
+    // Coastal belts (Konkan, Coromandel, Gujarat coast)
+    if (lng <= 73.5 || (lng >= 80.2 && lat <= 16) || (lat <= 11 && lng >= 75)) {
+      return Math.round(10 + Math.abs((lat * 7) % 30));
+    }
+    // Deccan / Malwa Plateau (South & Central India interior)
+    if (lat >= 12 && lat <= 24 && lng >= 74 && lng <= 80) {
+      return Math.round(420 + Math.abs((lat * 17 + lng * 11) % 350));
+    }
+    // Gangetic plain
+    if (lat >= 24 && lat <= 29 && lng >= 77 && lng <= 88) {
+      return Math.round(80 + Math.abs((lng - 77) * 8));
+    }
+  }
+  return 180;
+}
+
 export class MockElevationProvider implements ElevationProvider {
   async getElevationProfile(trainNumber: string): Promise<ElevationPoint[]> {
     const stations = await activeTrainProvider.getRouteStations(trainNumber);
@@ -42,7 +65,7 @@ export class MockElevationProvider implements ElevationProvider {
 
     for (let i = 0; i < stations.length; i++) {
       const curr = stations[i];
-      const baseElevation = STATION_ELEVATION_METERS[curr.station.code] || 150;
+      const baseElevation = getStationElevation(curr.station);
 
       points.push({
         distanceKm: curr.distanceFromSourceKm,
@@ -55,7 +78,7 @@ export class MockElevationProvider implements ElevationProvider {
       // If gap to next station is significant, interpolate realistic terrain topography points
       if (i < stations.length - 1) {
         const next = stations[i + 1];
-        const nextElevation = STATION_ELEVATION_METERS[next.station.code] || 150;
+        const nextElevation = getStationElevation(next.station);
         const gapKm = next.distanceFromSourceKm - curr.distanceFromSourceKm;
 
         // Add 2 intermediate points to render a natural geographic terrain profile

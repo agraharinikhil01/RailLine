@@ -26,9 +26,9 @@ export async function buildApp() {
     contentSecurityPolicy: false,
   });
 
-  // CORS
+  // CORS - allow all origins (local dev, Vercel deployments, custom domains)
   await app.register(cors, {
-    origin: [env.CORS_ORIGIN, 'http://localhost:5173', 'http://127.0.0.1:5173'],
+    origin: true,
     credentials: true,
   });
 
@@ -80,10 +80,15 @@ export async function buildApp() {
     });
   });
 
-  // Health check
-  app.get('/health', async () => {
-    return { status: 'healthy', timestamp: new Date().toISOString(), service: 'railline-api' };
+  // Health check routes
+  const healthHandler = async () => ({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    service: 'railline-api',
   });
+  app.get('/health', healthHandler);
+  app.get('/api', healthHandler);
+  app.get('/api/health', healthHandler);
 
   // Register API routes
   await app.register(trainRoutes, { prefix: '/api/v1/trains' });
@@ -98,7 +103,7 @@ export async function buildApp() {
   return app;
 }
 
-async function start() {
+export async function start() {
   const app = await buildApp();
   try {
     await app.listen({ port: env.PORT, host: env.HOST });
@@ -110,7 +115,8 @@ async function start() {
 }
 
 const isRunningTests = process.env.NODE_ENV === 'test' || process.argv.some((arg) => arg.includes('test'));
+const isServerless = Boolean(process.env.VERCEL) || process.env.IS_SERVERLESS === 'true';
 
-if (!isRunningTests) {
+if (!isRunningTests && !isServerless) {
   start();
 }

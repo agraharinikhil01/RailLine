@@ -8,10 +8,10 @@ const envSchema = z.object({
   PORT: z.coerce.number().default(3001),
   HOST: z.string().default('0.0.0.0'),
   CORS_ORIGIN: z.string().default('http://localhost:5173'),
-  RAILRADAR_API_KEY: z.string().optional(),
-  OPENWEATHER_API_KEY: z.string().optional(),
-  OPENTOPOGRAPHY_API_KEY: z.string().optional(),
-  MAPTILER_API_KEY: z.string().optional().default('default_key'),
+  RAILRADAR_API_KEY: z.string().default('rg_ff60afba90bf47d3bcb6c39f7920d3e0'),
+  OPENWEATHER_API_KEY: z.string().default('e1a729f45381dc424a9c2c66e8ad5d7e'),
+  OPENTOPOGRAPHY_API_KEY: z.string().default('175662481dc663c6bbd15126f256bade'),
+  MAPTILER_API_KEY: z.string().default('RbtagRyEluq70WIwgao8'),
 });
 
 export type Env = z.infer<typeof envSchema>;

@@ -9,12 +9,28 @@ export const Header: React.FC = () => {
   const isSearchActive = location.pathname === '/';
   const isTrackingActive = location.pathname.startsWith('/tracking');
 
+  // Get the most recent train number dynamically from user's history
+  const activeTrainNumber = React.useMemo(() => {
+    try {
+      const stored = localStorage.getItem('railline_recent_searches');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0 && parsed[0]?.trainNumber) {
+          return parsed[0].trainNumber;
+        }
+      }
+    } catch {
+      // ignore
+    }
+    return '12951';
+  }, [location.pathname]);
+
   return (
     <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-subtle">
-      <div className="w-full px-4 sm:px-8 h-16 flex items-center justify-between gap-4">
+      <div className="w-full px-6 sm:px-10 lg:px-16 h-16 flex items-center justify-between gap-4">
         {/* Brand Logo & Name */}
-        <RouterLink to="/" className="flex items-center gap-2.5 group">
-          <div className="w-9 h-9 rounded-full bg-sky-500 text-white flex items-center justify-center shadow-sm transition-transform group-hover:scale-105">
+        <RouterLink to="/" className="flex items-center gap-3 group">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-sky-600 to-sky-400 text-white flex items-center justify-center shadow-md shadow-sky-500/20 transition-transform group-hover:scale-105">
             <svg
               className="w-5 h-5 fill-current"
               viewBox="0 0 24 24"
@@ -24,10 +40,10 @@ export const Header: React.FC = () => {
             </svg>
           </div>
           <div className="flex items-center gap-2">
-            <span className="font-extrabold text-lg text-slate-900 tracking-tight">
+            <span className="font-extrabold text-xl text-slate-900 tracking-tight">
               RailGaadi
             </span>
-            <span className="text-[10px] uppercase font-mono font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-600 border border-emerald-200/80 flex items-center gap-1">
+            <span className="text-[10px] uppercase font-mono font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200/80 flex items-center gap-1.5 shadow-2xs">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               LIVE
             </span>
@@ -52,7 +68,7 @@ export const Header: React.FC = () => {
 
           {/* Live Tracking Pill (Screen 2) */}
           <RouterLink
-            to="/tracking/12951"
+            to={`/tracking/${activeTrainNumber}`}
             className={clsx(
               'px-4 py-2 text-xs font-semibold rounded-full transition-all flex items-center gap-1.5 shadow-2xs',
               isTrackingActive

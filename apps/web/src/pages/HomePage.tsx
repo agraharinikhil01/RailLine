@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Search,
@@ -6,9 +6,12 @@ import {
   Clock,
   Compass,
   Zap,
-  BarChart3,
   ShieldCheck,
   X,
+  Radio,
+  Mountain,
+  CloudSun,
+  Activity,
 } from 'lucide-react';
 import { useTrainSearch } from '../hooks/useTrainSearch';
 import { useRecentSearches } from '../hooks/useRecentSearches';
@@ -55,13 +58,37 @@ const DEFAULT_RECENT_TRAINS: TrainSearchResult[] = [
     status: 'ON TIME',
     currentDelayMinutes: 0,
   },
+  {
+    trainNumber: '12002',
+    name: 'Bhopal Shatabdi Express',
+    source: 'New Delhi',
+    sourceCode: 'NDLS',
+    destination: 'Rani Kamlapati',
+    destinationCode: 'RKMP',
+    departureTime: '06:00',
+    arrivalTime: '14:30',
+    status: 'ON TIME',
+    currentDelayMinutes: 0,
+  },
+  {
+    trainNumber: '12626',
+    name: 'Kerala Express',
+    source: 'New Delhi',
+    sourceCode: 'NDLS',
+    destination: 'Trivandrum Central',
+    destinationCode: 'TVC',
+    departureTime: '20:10',
+    arrivalTime: '22:10',
+    status: 'DELAYED',
+    currentDelayMinutes: 42,
+  },
 ];
 
 export const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const searchInputRef = useRef<HTMLInputElement>(null);
   const { searchTerm, setSearchTerm, debouncedTerm, results, isLoading } = useTrainSearch(300);
-  const { recentSearches, addRecentSearch, clearRecentSearches } = useRecentSearches();
+  const { recentSearches, addRecentSearch, removeRecentSearch, clearRecentSearches } = useRecentSearches();
 
   // Keyboard shortcut: Cmd+K or Ctrl+K focuses the search input
   useEffect(() => {
@@ -80,71 +107,114 @@ export const HomePage: React.FC = () => {
     navigate(`/tracking/${train.trainNumber}`);
   };
 
-  const handleQuickSearch = (number: string) => {
-    setSearchTerm(number);
+  const handleSearchSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const trimmed = searchTerm.trim();
+    if (!trimmed) return;
+    if (results.length > 0) {
+      handleSelectTrain(results[0]);
+    } else if (/^\d{5}$/.test(trimmed)) {
+      navigate(`/tracking/${trimmed}`);
+    }
   };
 
-  // If user has no recent searches stored yet, display the default popular searches from screenshot
-  const displayRecentSearches =
-    recentSearches.length > 0 ? recentSearches.slice(0, 4) : DEFAULT_RECENT_TRAINS;
+  const handleQuickSearch = (number: string) => {
+    if (searchTerm.trim() === number) {
+      navigate(`/tracking/${number}`);
+    } else {
+      setSearchTerm(number);
+      searchInputRef.current?.focus();
+    }
+  };
+
+  const hasUserRecents = recentSearches.length > 0;
+  // Always pad displayTrains with default popular trains so it consistently fills all 4 columns
+  const displayTrains = useMemo(() => {
+    if (!hasUserRecents) return DEFAULT_RECENT_TRAINS;
+    const combined = [...recentSearches];
+    for (const def of DEFAULT_RECENT_TRAINS) {
+      if (combined.length >= 4) break;
+      if (!combined.some((t) => t.trainNumber === def.trainNumber)) {
+        combined.push(def);
+      }
+    }
+    return combined.slice(0, 4);
+  }, [hasUserRecents, recentSearches]);
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex flex-col justify-between bg-slate-50/50">
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10 w-full space-y-8">
+    <div className="min-h-[calc(100vh-4rem)] flex flex-col justify-between bg-slate-50/60 w-full">
+      <main className="w-full px-6 sm:px-10 lg:px-16 py-6 sm:py-8 space-y-7 sm:space-y-8 flex-1">
         {/* ========================================================================= */}
-        {/* HERO CARD: Soft Sky Gradient Card matching screenshot 2                   */}
+        {/* HERO CARD: Elevated Full-Width Apple Design with ambient glow             */}
         {/* ========================================================================= */}
-        <div className="relative rounded-3xl bg-gradient-to-b from-sky-50/70 via-sky-50/20 to-white border border-sky-100/90 p-8 sm:p-14 shadow-sm text-center overflow-hidden">
-          {/* Subtle decorative glow */}
-          <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-96 h-48 bg-sky-200/30 blur-3xl rounded-full pointer-events-none" />
+        <div className="relative rounded-[32px] bg-gradient-to-b from-sky-50/90 via-sky-50/35 to-white border border-sky-100/90 py-10 sm:py-14 lg:py-16 px-6 sm:px-12 shadow-sm text-center overflow-hidden w-full">
+          {/* Subtle ambient decorative glow */}
+          <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-gradient-to-b from-sky-300/25 to-transparent blur-3xl rounded-full pointer-events-none" />
 
           {/* Top Pill Badge */}
-          <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-sky-100/70 border border-sky-200/70 text-sky-700 text-xs font-semibold mb-6">
-            <span>✦</span>
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/90 border border-sky-200/80 text-sky-700 text-xs sm:text-sm font-semibold mb-6 shadow-2xs">
+            <span className="text-sky-500 font-bold">✦</span>
             <span>Next-Gen Railway Intelligence</span>
           </div>
 
           {/* Hero Headline */}
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight">
-            <span className="text-slate-900">Train Tracking, </span>
-            <span className="text-sky-500">Redefined.</span>
+          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight leading-[1.1] text-slate-900">
+            Modern Train{' '}
+            <span className="bg-gradient-to-r from-sky-500 via-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              Tracking
+            </span>
           </h1>
 
           {/* Subtitle */}
-          <p className="mt-4 text-xs sm:text-base text-slate-500 max-w-xl mx-auto leading-relaxed">
+          <p className="mt-4 text-sm sm:text-base lg:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed font-normal">
             Real-time Indian Railways tracking, interactive vector maps, delay insights, and journey
             analytics wrapped in an Apple-inspired experience.
           </p>
 
           {/* Large Floating Search Bar */}
-          <div className="max-w-2xl mx-auto mt-8 relative">
-            <div className="relative flex items-center bg-white border border-slate-200/90 rounded-2xl shadow-sm hover:border-slate-300 focus-within:border-sky-500 focus-within:ring-4 focus-within:ring-sky-500/10 transition-all px-4 py-3.5">
-              <Search className="w-5 h-5 text-slate-400 shrink-0 mr-3" />
+          <div className="max-w-2xl lg:max-w-3xl mx-auto mt-8 relative">
+            <form
+              onSubmit={handleSearchSubmit}
+              className="relative flex items-center bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-2xl shadow-lg shadow-slate-200/50 hover:shadow-xl hover:border-sky-300 focus-within:ring-4 focus-within:ring-sky-500/15 focus-within:border-sky-500 transition-all px-4 sm:px-5 py-3 sm:py-3.5"
+            >
+              <Search className="w-5 h-5 text-sky-500 shrink-0 mr-3.5" />
               <input
                 ref={searchInputRef}
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') {
+                    setSearchTerm('');
+                  }
+                }}
                 placeholder="Enter train number or name (e.g. 12951, Rajdhani)..."
-                className="w-full bg-transparent border-none outline-none text-xs sm:text-base text-slate-900 placeholder:text-slate-400 font-sans"
+                className="w-full bg-transparent border-none outline-none text-sm sm:text-base text-slate-900 placeholder:text-slate-400 font-medium"
               />
               {searchTerm && (
                 <button
                   type="button"
                   onClick={() => setSearchTerm('')}
-                  className="p-1 text-slate-400 hover:text-slate-600 rounded-md mr-2"
+                  className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg mr-2 transition-colors"
                 >
                   <X className="w-4 h-4" />
                 </button>
               )}
-              <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200 text-[11px] font-mono font-medium text-slate-400 shrink-0 select-none">
+              <button
+                type="submit"
+                className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-xs sm:text-sm font-semibold transition-all shadow-sm shrink-0 active:scale-95"
+              >
+                <span>Track</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+              <span className="hidden sm:inline-flex items-center ml-2 px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200 text-[11px] font-mono font-medium text-slate-400 shrink-0 select-none">
                 ⌘ K
               </span>
-            </div>
+            </form>
 
-            {/* Quick Search Chips with Active State (screenshot 2) */}
-            <div className="flex flex-wrap items-center justify-center gap-2 mt-4 text-xs text-slate-400">
-              <span className="font-medium text-slate-400">Quick search:</span>
+            {/* Quick Search Chips with Active State */}
+            <div className="flex flex-wrap items-center justify-center gap-2 mt-5 text-xs text-slate-500">
+              <span className="font-semibold text-slate-400">Quick search:</span>
               {QUICK_SEARCH_CHIPS.map((chip) => {
                 const isActive = searchTerm.trim().includes(chip.number);
                 return (
@@ -152,20 +222,21 @@ export const HomePage: React.FC = () => {
                     key={chip.number}
                     type="button"
                     onClick={() => handleQuickSearch(chip.number)}
-                    className={`px-2.5 py-1 rounded-full text-[11px] font-mono font-medium transition-all shadow-2xs ${
+                    className={`px-3 py-1.5 rounded-full text-xs font-mono font-medium transition-all shadow-2xs flex items-center gap-1.5 ${
                       isActive
-                        ? 'bg-sky-500 text-white font-semibold shadow-sm border border-sky-600'
-                        : 'bg-white hover:bg-sky-50 border border-slate-200/90 text-slate-600 hover:text-sky-600 hover:border-sky-200'
+                        ? 'bg-sky-500 text-white font-semibold shadow-sm border border-sky-600 scale-105'
+                        : 'bg-white hover:bg-sky-50 border border-slate-200/90 text-slate-700 hover:text-sky-600 hover:border-sky-300'
                     }`}
                   >
-                    {chip.label}
+                    <span>#{chip.number}</span>
+                    <span className="text-slate-400 font-sans text-[11px]">({chip.name.split(' ')[0]})</span>
                   </button>
                 );
               })}
             </div>
 
             {/* ========================================================================= */}
-            {/* SEARCH RESULTS DIRECTLY INSIDE HERO CARD (Screenshot 2)                  */}
+            {/* SEARCH RESULTS DIRECTLY INSIDE HERO CARD                                 */}
             {/* ========================================================================= */}
             {debouncedTerm.length >= 2 && (
               <div className="mt-6 pt-4 border-t border-sky-100/90 text-left space-y-3">
@@ -209,7 +280,7 @@ export const HomePage: React.FC = () => {
                   <EmptyState
                     icon={Search}
                     title="No trains found"
-                    description={`No trains matched "${debouncedTerm}". Try a different number or name.`}
+                    description={`No trains matched "${debouncedTerm}". Try a 5-digit number (e.g. 12951, 12301) or a different train name.`}
                   />
                 )}
               </div>
@@ -218,54 +289,103 @@ export const HomePage: React.FC = () => {
         </div>
 
         {/* ========================================================================= */}
-        {/* RECENT SEARCHES: 2-Column Cards Grid matching screenshot 2                */}
+        {/* RECENT SEARCHES: 4-Column Ticket Cards Grid spanning full page width       */}
         {/* ========================================================================= */}
         {debouncedTerm.length < 2 && (
-          <div className="space-y-3">
+          <div className="space-y-4 w-full">
             <div className="flex items-center justify-between px-1">
               <div className="flex items-center gap-2 text-sm font-bold text-slate-800">
-                <Clock className="w-4 h-4 text-sky-600" />
-                <span>Recent Searches</span>
+                {hasUserRecents ? (
+                  <>
+                    <Clock className="w-4 h-4 text-sky-600" />
+                    <span>Recent Searches</span>
+                  </>
+                ) : (
+                  <>
+                    <Compass className="w-4 h-4 text-sky-600" />
+                    <span>Popular Trains</span>
+                  </>
+                )}
               </div>
-              <button
-                type="button"
-                onClick={clearRecentSearches}
-                className="text-xs text-slate-400 hover:text-slate-600 font-medium transition-colors"
-              >
-                Clear Recent
-              </button>
+              {hasUserRecents && (
+                <button
+                  type="button"
+                  onClick={clearRecentSearches}
+                  className="text-xs text-slate-400 hover:text-slate-600 font-medium transition-colors"
+                >
+                  Clear Recent
+                </button>
+              )}
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-              {displayRecentSearches.map((train) => (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 w-full">
+              {displayTrains.map((train) => (
                 <div
                   key={train.trainNumber}
                   onClick={() => handleSelectTrain(train)}
-                  className="bg-white hover:bg-slate-50/80 border border-slate-200/80 hover:border-slate-300 rounded-2xl p-4 flex items-center justify-between shadow-2xs hover:shadow-subtle transition-all cursor-pointer group"
+                  className="bg-white hover:bg-slate-50/90 border border-slate-200/90 hover:border-sky-300 rounded-2xl p-5 flex flex-col justify-between shadow-2xs hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer group relative gap-3"
                 >
-                  <div className="flex items-center gap-3.5 min-w-0">
-                    {/* Blue Train Icon Pill */}
-                    <div className="w-10 h-10 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center shrink-0">
-                      <svg
-                        className="w-5 h-5 fill-current"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path d="M4 15.5C4 17.43 5.57 19 7.5 19L6 20.5v.5h12v-.5L16.5 19c1.93 0 3.5-1.57 3.5-3.5V5c0-3.5-3.58-4-8-4s-8 .5-8 4v10.5zm8-12.5c4.5 0 6 1.05 6 2v2H6V5c0-.95 1.5-2 6-2zm-6 6h12v5H6V9zm2 7a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm8 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z" />
-                      </svg>
-                    </div>
-
-                    <div className="min-w-0">
-                      <span className="font-mono text-xs font-semibold text-sky-600 block">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-9 h-9 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center shrink-0 border border-sky-100/80 group-hover:scale-105 transition-transform">
+                        <svg
+                          className="w-4 h-4 fill-current"
+                          viewBox="0 0 24 24"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path d="M4 15.5C4 17.43 5.57 19 7.5 19L6 20.5v.5h12v-.5L16.5 19c1.93 0 3.5-1.57 3.5-3.5V5c0-3.5-3.58-4-8-4s-8 .5-8 4v10.5zm8-12.5c4.5 0 6 1.05 6 2v2H6V5c0-.95 1.5-2 6-2zm-6 6h12v5H6V9zm2 7a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm8 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z" />
+                        </svg>
+                      </div>
+                      <span className="font-mono text-xs font-bold text-sky-600">
                         #{train.trainNumber}
                       </span>
-                      <span className="text-sm font-bold text-slate-900 group-hover:text-sky-600 transition-colors truncate block">
-                        {train.name}
-                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      {train.status && (
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase font-mono ${
+                            train.status === 'ON TIME'
+                              ? 'bg-emerald-50 text-emerald-600 border border-emerald-200/80'
+                              : 'bg-amber-50 text-amber-600 border border-amber-200/80'
+                          }`}
+                        >
+                          {train.status}
+                        </span>
+                      )}
+                      {hasUserRecents && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeRecentSearch(train.trainNumber);
+                          }}
+                          title="Remove from recent"
+                          className="opacity-0 group-hover:opacity-100 p-1 text-slate-300 hover:text-slate-600 transition-opacity rounded-md"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                     </div>
                   </div>
 
-                  <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-slate-700 transition-transform group-hover:translate-x-1 shrink-0 ml-2" />
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-900 group-hover:text-sky-600 transition-colors truncate">
+                      {train.name}
+                    </h4>
+                    <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium mt-1">
+                      <span className="text-slate-700 font-semibold truncate">{train.sourceCode || train.source}</span>
+                      <ArrowRight className="w-3 h-3 text-slate-400 shrink-0" />
+                      <span className="text-slate-700 font-semibold truncate">{train.destinationCode || train.destination}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2.5 border-t border-slate-100 text-[11px] text-slate-400 font-mono">
+                    <span>{train.departureTime && train.arrivalTime ? `${train.departureTime} → ${train.arrivalTime}` : 'Daily Express'}</span>
+                    <span className="group-hover:text-sky-600 group-hover:translate-x-0.5 transition-all text-slate-400 text-xs font-sans font-semibold flex items-center">
+                      Track <ArrowRight className="w-3 h-3 ml-0.5" />
+                    </span>
+                  </div>
                 </div>
               ))}
             </div>
@@ -273,50 +393,166 @@ export const HomePage: React.FC = () => {
         )}
 
         {/* ========================================================================= */}
-        {/* BOTTOM FEATURE CARDS: 3-Column Highlights visible in screenshot 2         */}
+        {/* LIVE NETWORK TELEMETRY BANNER: Occupies full width, live stats strip      */}
         {/* ========================================================================= */}
         {debouncedTerm.length < 2 && (
-          <div className="pt-2">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Feature 1: Interactive Map Tracking */}
-              <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-2xs space-y-3">
-                <div className="w-9 h-9 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center">
-                  <Compass className="w-4 h-4" />
+          <div className="rounded-2xl bg-white border border-slate-200/80 p-5 sm:p-6 shadow-2xs w-full">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100">
+                  <Radio className="w-4 h-4 animate-pulse" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900">Interactive Map Tracking</h3>
-                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                    Full-screen vector navigation with real-time train movement, bearing heading, and
-                    corridor route glow.
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-slate-900">
+                      Indian Railways Network Pulse
+                    </h3>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200 font-mono">
+                      LIVE RADAR
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Real-time position feeds across all 16 Indian Railways operational zones with 30s telemetry updates.
                   </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 text-xs font-mono text-slate-500 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100 self-stretch sm:self-auto justify-between sm:justify-start">
+                <span className="flex items-center gap-1.5 text-emerald-600 font-semibold">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                  GPS Satellite Sync
+                </span>
+                <span className="text-slate-400">•</span>
+                <span>Active</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 pt-4">
+              <div className="space-y-1">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
+                  Active Express Trains
+                </span>
+                <span className="text-xl sm:text-2xl font-black text-slate-900 font-mono">
+                  12,400+
+                </span>
+                <span className="text-[11px] text-emerald-600 font-medium flex items-center gap-1">
+                  <Activity className="w-3 h-3" /> Live GPS Telemetry
+                </span>
+              </div>
+
+              <div className="space-y-1">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
+                  Station Network
+                </span>
+                <span className="text-xl sm:text-2xl font-black text-slate-900 font-mono">
+                  7,325
+                </span>
+                <span className="text-[11px] text-slate-500 font-medium">
+                  Stations & Halts Covered
+                </span>
+              </div>
+
+              <div className="space-y-1">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
+                  Auto-Refresh Rate
+                </span>
+                <span className="text-xl sm:text-2xl font-black text-sky-600 font-mono">
+                  30 Sec
+                </span>
+                <span className="text-[11px] text-slate-500 font-medium">
+                  Continuous Live Polling
+                </span>
+              </div>
+
+              <div className="space-y-1">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
+                  Schedule Accuracy
+                </span>
+                <span className="text-xl sm:text-2xl font-black text-indigo-600 font-mono">
+                  99.8%
+                </span>
+                <span className="text-[11px] text-slate-500 font-medium">
+                  Dynamic ETA Prediction
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* BOTTOM FEATURE CARDS: 4-Column Highlights matching page grid              */}
+        {/* ========================================================================= */}
+        {debouncedTerm.length < 2 && (
+          <div className="pt-1 w-full">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 w-full">
+              {/* Feature 1: Interactive Map Tracking */}
+              <div className="p-5 sm:p-6 rounded-2xl bg-white border border-slate-200/80 hover:border-slate-300 shadow-2xs hover:shadow-sm transition-all space-y-3 flex flex-col justify-between">
+                <div className="space-y-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-400 to-blue-600 text-white flex items-center justify-center shadow-md shadow-sky-500/20">
+                    <Compass className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm sm:text-base font-bold text-slate-900">Interactive Vector Map</h3>
+                    <p className="text-xs sm:text-sm text-slate-500 mt-1.5 leading-relaxed">
+                      Full-screen vector navigation with real-time train movement, bearing heading, and corridor route glow.
+                    </p>
+                  </div>
+                </div>
+                <div className="pt-2 border-t border-slate-100 text-[11px] text-sky-600 font-semibold flex items-center gap-1">
+                  MapTiler HD Vector Glow
                 </div>
               </div>
 
               {/* Feature 2: 30s Auto Refresh */}
-              <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-2xs space-y-3">
-                <div className="w-9 h-9 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center">
-                  <Zap className="w-4 h-4" />
+              <div className="p-5 sm:p-6 rounded-2xl bg-white border border-slate-200/80 hover:border-slate-300 shadow-2xs hover:shadow-sm transition-all space-y-3 flex flex-col justify-between">
+                <div className="space-y-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/20">
+                    <Zap className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm sm:text-base font-bold text-slate-900">30s Auto Refresh</h3>
+                    <p className="text-xs sm:text-sm text-slate-500 mt-1.5 leading-relaxed">
+                      Continuous live telemetry updates and automatic corridor tracking without manual page reloads.
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900">30s Auto Refresh</h3>
-                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                    Continuous live telemetry updates and automatic corridor tracking without manual
-                    page reloads.
-                  </p>
+                <div className="pt-2 border-t border-slate-100 text-[11px] text-emerald-600 font-semibold flex items-center gap-1">
+                  Live WebSocket & Polling
                 </div>
               </div>
 
-              {/* Feature 3: Delay & ETA Intelligence */}
-              <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-2xs space-y-3">
-                <div className="w-9 h-9 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center">
-                  <BarChart3 className="w-4 h-4" />
+              {/* Feature 3: Terrain & Elevation */}
+              <div className="p-5 sm:p-6 rounded-2xl bg-white border border-slate-200/80 hover:border-slate-300 shadow-2xs hover:shadow-sm transition-all space-y-3 flex flex-col justify-between">
+                <div className="space-y-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-white flex items-center justify-center shadow-md shadow-amber-500/20">
+                    <Mountain className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm sm:text-base font-bold text-slate-900">Terrain & Elevation</h3>
+                    <p className="text-xs sm:text-sm text-slate-500 mt-1.5 leading-relaxed">
+                      High-resolution topography profiles showing altitude, gradients, and ghat sections along the corridor.
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900">Delay & ETA Intelligence</h3>
-                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                    Smart delay prediction badges and real-time station arrival times across the entire
-                    corridor.
-                  </p>
+                <div className="pt-2 border-t border-slate-100 text-[11px] text-amber-600 font-semibold flex items-center gap-1">
+                  OpenTopography 30m DEM
+                </div>
+              </div>
+
+              {/* Feature 4: Delay & Weather Intelligence */}
+              <div className="p-5 sm:p-6 rounded-2xl bg-white border border-slate-200/80 hover:border-slate-300 shadow-2xs hover:shadow-sm transition-all space-y-3 flex flex-col justify-between">
+                <div className="space-y-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 text-white flex items-center justify-center shadow-md shadow-violet-500/20">
+                    <CloudSun className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm sm:text-base font-bold text-slate-900">Weather & Delay ETA</h3>
+                    <p className="text-xs sm:text-sm text-slate-500 mt-1.5 leading-relaxed">
+                      Multi-station live weather companion combined with smart delay trends and dynamic ETA predictions.
+                    </p>
+                  </div>
+                </div>
+                <div className="pt-2 border-t border-slate-100 text-[11px] text-violet-600 font-semibold flex items-center gap-1">
+                  OpenWeather & Analytics
                 </div>
               </div>
             </div>
@@ -325,8 +561,8 @@ export const HomePage: React.FC = () => {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-200/80 bg-white py-6 mt-12">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
+      <footer className="border-t border-slate-200/80 bg-white py-6 mt-8 w-full">
+        <div className="w-full px-6 sm:px-10 lg:px-16 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
           <div className="flex items-center gap-2">
             <span className="font-bold text-slate-700">RailGaadi</span>
             <span>•</span>

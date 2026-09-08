@@ -28,7 +28,6 @@ import { WeatherCard } from '../components/weather/WeatherCard';
 import { RouteWeatherStrip } from '../components/weather/RouteWeatherStrip';
 import { GeographyCard } from '../components/companion/GeographyCard';
 import { ShareModal } from '../components/sharing/ShareModal';
-import { Skeleton } from '../components/ui/Skeleton';
 import { ErrorState } from '../components/ui/ErrorState';
 import { JourneyStation } from '@railline/types';
 
@@ -121,14 +120,16 @@ export const TrackingPage: React.FC = () => {
 
   if (isStatusLoading && !status) {
     return (
-      <div className="w-full min-h-[calc(100vh-4rem)] flex items-center justify-center bg-slate-900 p-8">
+      <div className="w-full min-h-[calc(100vh-4rem)] flex items-center justify-center bg-slate-50/60 p-8">
         <div className="max-w-md w-full space-y-4 text-center">
-          <div className="w-12 h-12 rounded-2xl bg-sky-500/20 text-sky-400 mx-auto flex items-center justify-center animate-pulse">
-            <Radio className="w-6 h-6 animate-ping" />
+          <div className="w-12 h-12 rounded-2xl bg-sky-100 text-sky-600 mx-auto flex items-center justify-center shadow-xs">
+            <Radio className="w-6 h-6 animate-pulse" />
           </div>
-          <h3 className="text-base font-bold text-white">Connecting to Railway Telemetry...</h3>
-          <p className="text-xs text-slate-400">Loading live GPS coordinates, track geometries, and station halts</p>
-          <Skeleton className="w-full h-2 rounded-full" />
+          <h3 className="text-base font-bold text-slate-900">Connecting to Railway Telemetry...</h3>
+          <p className="text-xs text-slate-500">Loading live GPS coordinates, track geometries, and station halts</p>
+          <div className="w-48 mx-auto h-1.5 bg-slate-200 rounded-full overflow-hidden">
+            <div className="h-full bg-sky-500 rounded-full animate-indeterminate" />
+          </div>
         </div>
       </div>
     );
@@ -160,7 +161,7 @@ export const TrackingPage: React.FC = () => {
         isLoading={isGeneratingShare}
       />
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-5">
+      <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16 py-4 sm:py-6 space-y-4 sm:space-y-6">
         {/* 1. TOP SUBHEADER BAR */}
         <div className="flex items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-2.5">
@@ -231,13 +232,21 @@ export const TrackingPage: React.FC = () => {
               </div>
               <div className="min-w-0">
                 <span className="text-[10px] sm:text-[11px] font-bold tracking-wider text-slate-400 uppercase block">
-                  CURRENT / LAST STATION
+                  CURRENT LOCATION
                 </span>
                 <span className="text-xl sm:text-2xl font-extrabold text-slate-900 truncate block">
-                  {status.currentStation?.name || 'Between Stations'}
+                  {status.currentStation?.name || 'In Transit'}
                 </span>
-                <span className="text-xs text-slate-500 font-medium block mt-0.5">
-                  Platform {status.currentStation?.platform || '1'}
+                <span className="text-xs text-slate-500 font-medium block mt-0.5 truncate">
+                  {status.nextStation?.name ? (
+                    <>
+                      Next Halt: <span className="font-semibold text-slate-700">{status.nextStation.name}</span>
+                      {status.nextStation.platform ? ` (PF ${status.nextStation.platform})` : ''}
+                      {status.etaNextStation ? ` • ETA ${status.etaNextStation}` : ''}
+                    </>
+                  ) : (
+                    status.currentStation?.platform ? `Platform ${status.currentStation.platform}` : 'En Route'
+                  )}
                 </span>
               </div>
             </div>
@@ -248,11 +257,17 @@ export const TrackingPage: React.FC = () => {
               </div>
               <div>
                 <span className="text-[10px] sm:text-[11px] font-bold tracking-wider text-slate-400 uppercase block">
-                  LIVE SPEED
+                  LIVE TELEMETRY SPEED
                 </span>
                 <span className="text-xl sm:text-2xl font-extrabold text-slate-900 block font-mono">
-                  {status.location?.speedKmph || 118}{' '}
+                  {status.location?.speedKmph ?? 0}{' '}
                   <span className="text-sm sm:text-base font-semibold text-slate-500">km/h</span>
+                </span>
+                <span className="text-xs text-slate-500 font-medium block mt-0.5">
+                  Status:{' '}
+                  <span className={status.delayMinutes > 5 ? 'font-bold text-amber-600' : 'font-bold text-emerald-600'}>
+                    {status.delayMinutes > 0 ? `${status.delayMinutes}m Late` : 'On Time'}
+                  </span>
                 </span>
               </div>
             </div>
@@ -263,16 +278,16 @@ export const TrackingPage: React.FC = () => {
                   DISTANCE COVERED
                 </span>
                 <span className="text-lg sm:text-xl font-extrabold text-slate-900 block font-mono">
-                  {status.distanceCoveredKm} km{' '}
+                  {status.distanceCoveredKm || 0} km{' '}
                   <span className="text-slate-400 font-normal">/</span>{' '}
-                  {status.distanceCoveredKm + status.distanceRemainingKm} km
+                  {(status.distanceCoveredKm || 0) + (status.distanceRemainingKm || 0)} km
                 </span>
                 <span className="text-xs text-slate-500 font-medium block mt-0.5">
-                  {status.distanceRemainingKm} km remaining
+                  {status.distanceRemainingKm || 0} km remaining
                 </span>
               </div>
 
-              <CircularProgressRing percentage={status.progressPercentage || 57} />
+              <CircularProgressRing percentage={status.progressPercentage || 0} />
             </div>
           </div>
           <div className="border-t border-slate-100/90 mt-5 pt-3 flex items-center justify-between text-[11px] text-slate-400 font-mono">
@@ -326,7 +341,7 @@ export const TrackingPage: React.FC = () => {
         {/* 4. TAB CONTENT */}
         {activeTab === 'map' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-            <div className="lg:col-span-7 xl:col-span-8 rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden h-[540px] sm:h-[600px] relative bg-slate-950">
+            <div className="lg:col-span-7 xl:col-span-8 2xl:col-span-8 rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden h-[580px] sm:h-[640px] lg:h-[700px] relative bg-slate-950">
               <JourneyMap
                 status={status}
                 routeGeoJSON={routeGeoJSON}
@@ -336,7 +351,7 @@ export const TrackingPage: React.FC = () => {
                 className="w-full h-full"
               />
             </div>
-            <div className="lg:col-span-5 xl:col-span-4 rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm h-[540px] sm:h-[600px] flex flex-col">
+            <div className="lg:col-span-5 xl:col-span-4 2xl:col-span-4 rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm h-[580px] sm:h-[640px] lg:h-[700px] flex flex-col">
               <JourneyTimeline
                 stations={timeline}
                 onSelectStation={handleStationClick}
