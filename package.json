@@ -1,0 +1,25 @@
+{
+  "name": "railline",
+  "version": "1.0.0",
+  "private": true,
+  "description": "RailLine - Real-time railway tracking and journey intelligence platform",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspaces --if-present",
+    "dev:api": "npm run dev --workspace=@railline/api",
+    "dev:web": "npm run dev --workspace=@railline/web",
+    "build": "npm run build --workspaces --if-present",
+    "test": "npx tsx --test apps/api/test/api.test.ts"
+  },
+  "keywords": [
+    "railway",
+    "tracking",
+    "maps",
+    "journey-intelligence"
+  ],
+  "author": "RailLine Team",
+  "license": "MIT"
+}
