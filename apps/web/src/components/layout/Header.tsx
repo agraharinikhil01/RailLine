@@ -1,7 +1,17 @@
 import React from 'react';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useLocation } from 'react-router-dom';
+import { Heart, Sliders, MapPin } from 'lucide-react';
+import { clsx } from 'clsx';
 
 export const Header: React.FC = () => {
+  const location = useLocation();
+
+  const isActive = (path: string) => {
+    if (path === '/' && location.pathname === '/') return true;
+    if (path !== '/' && location.pathname.startsWith(path)) return true;
+    return false;
+  };
+
   return (
     <header className="sticky top-0 z-30 w-full bg-white/90 backdrop-blur-md border-b border-slate-200/80">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
@@ -27,28 +37,42 @@ export const Header: React.FC = () => {
         <nav className="flex items-center gap-1 sm:gap-2">
           <RouterLink
             to="/"
-            className="px-3 py-1.5 text-xs sm:text-sm font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+            className={clsx(
+              'px-3 py-1.5 text-xs sm:text-sm font-medium rounded-lg transition-colors flex items-center gap-1.5',
+              isActive('/')
+                ? 'bg-slate-100 text-slate-900 font-semibold'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+            )}
           >
-            Track Train
+            <MapPin className="w-3.5 h-3.5 text-sky-500" />
+            <span>Track Train</span>
           </RouterLink>
-          <a
-            href="#explore"
-            onClick={(e) => {
-              e.preventDefault();
-              alert('Phase 2 Explore & Route Geography is coming up next!');
-            }}
-            className="px-3 py-1.5 text-xs sm:text-sm font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors hidden sm:inline-block"
+
+          <RouterLink
+            to="/favorites"
+            className={clsx(
+              'px-3 py-1.5 text-xs sm:text-sm font-medium rounded-lg transition-colors flex items-center gap-1.5',
+              isActive('/favorites')
+                ? 'bg-slate-100 text-slate-900 font-semibold'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+            )}
           >
-            Explore Route
-          </a>
-          <a
-            href="https://github.com"
-            target="_blank"
-            rel="noreferrer"
-            className="px-3 py-1.5 text-xs font-mono text-slate-500 hover:text-slate-900 border border-slate-200 rounded-lg transition-colors ml-1 hidden sm:inline-block"
+            <Heart className="w-3.5 h-3.5 text-rose-500" />
+            <span>Favorites</span>
+          </RouterLink>
+
+          <RouterLink
+            to="/settings"
+            className={clsx(
+              'px-3 py-1.5 text-xs sm:text-sm font-medium rounded-lg transition-colors flex items-center gap-1.5',
+              isActive('/settings')
+                ? 'bg-slate-100 text-slate-900 font-semibold'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+            )}
           >
-            v1.0 MVP
-          </a>
+            <Sliders className="w-3.5 h-3.5 text-slate-500" />
+            <span>Settings</span>
+          </RouterLink>
         </nav>
       </div>
     </header>

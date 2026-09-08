@@ -3,10 +3,32 @@ import {
   TrainSearchResult,
   LiveTrainStatus,
   JourneyStation,
+  ElevationPoint,
+  RouteWeather,
+  GeographicPlace,
+  SharedJourneyData,
 } from '@railline/types';
 import { apiClient } from './api';
 
+export interface ElevationSummary {
+  profile: ElevationPoint[];
+  currentElevationMeters: number;
+  highestElevationMeters: number;
+  lowestElevationMeters: number;
+  elevationGainMeters: number;
+}
+
+export interface StationDelayPoint {
+  stationCode: string;
+  stationName: string;
+  scheduledTime: string;
+  actualTime: string;
+  delayMinutes: number;
+  distanceKm: number;
+}
+
 export const trainApi = {
+  // --- Phase 1 ---
   searchTrains: async (query: string): Promise<TrainSearchResult[]> => {
     return apiClient<TrainSearchResult[]>(`/trains/search?q=${encodeURIComponent(query)}`);
   },
@@ -25,5 +47,54 @@ export const trainApi = {
 
   getTimeline: async (trainNumber: string): Promise<JourneyStation[]> => {
     return apiClient<JourneyStation[]>(`/trains/${encodeURIComponent(trainNumber)}/timeline`);
+  },
+
+  // --- Phase 2 Analytics & Elevation ---
+  getElevationSummary: async (trainNumber: string): Promise<ElevationSummary> => {
+    return apiClient<ElevationSummary>(`/trains/${encodeURIComponent(trainNumber)}/elevation`);
+  },
+
+  getDelayHistory: async (trainNumber: string): Promise<StationDelayPoint[]> => {
+    return apiClient<StationDelayPoint[]>(`/trains/${encodeURIComponent(trainNumber)}/delays`);
+  },
+
+  // --- Phase 2 Travel Companion ---
+  getRouteWeather: async (trainNumber: string): Promise<RouteWeather> => {
+    return apiClient<RouteWeather>(`/trains/${encodeURIComponent(trainNumber)}/weather`);
+  },
+
+  getNearbyPlaces: async (trainNumber: string, category?: string): Promise<GeographicPlace[]> => {
+    const query = category ? `?category=${encodeURIComponent(category)}` : '';
+    return apiClient<GeographicPlace[]>(`/trains/${encodeURIComponent(trainNumber)}/places${query}`);
+  },
+
+  // --- Phase 2 Sharing ---
+  createShareLink: async (trainNumber: string): Promise<{ shareToken: string; shareUrl: string; expiresAt: string }> => {
+    return apiClient<{ shareToken: string; shareUrl: string; expiresAt: string }>('/journeys/share', {
+      method: 'POST',
+      body: JSON.stringify({ trainNumber }),
+    });
+  },
+
+  getSharedJourney: async (shareToken: string): Promise<SharedJourneyData> => {
+    return apiClient<SharedJourneyData>(`/journeys/shared/${encodeURIComponent(shareToken)}`);
+  },
+
+  // --- Phase 2 Favorites ---
+  getFavorites: async (): Promise<TrainSearchResult[]> => {
+    return apiClient<TrainSearchResult[]>('/favorites');
+  },
+
+  addFavorite: async (trainNumber: string): Promise<{ success: boolean; trainNumber: string }> => {
+    return apiClient<{ success: boolean; trainNumber: string }>('/favorites', {
+      method: 'POST',
+      body: JSON.stringify({ trainNumber }),
+    });
+  },
+
+  removeFavorite: async (trainNumber: string): Promise<{ success: boolean; trainNumber: string }> => {
+    return apiClient<{ success: boolean; trainNumber: string }>(`/favorites/${encodeURIComponent(trainNumber)}`, {
+      method: 'DELETE',
+    });
   },
 };

@@ -5,6 +5,12 @@ import rateLimit from '@fastify/rate-limit';
 import { nanoid } from 'nanoid';
 import { env } from './config/env';
 import { trainRoutes } from './routes/trains';
+import { analyticsRoutes } from './routes/analytics';
+import { pointWeatherRoutes, trainWeatherRoutes } from './routes/weather';
+import { placesRoutes } from './routes/places';
+import { sharingRoutes } from './routes/sharing';
+import { favoritesRoutes } from './routes/favorites';
+import { adminRoutes } from './routes/admin';
 import { AppError } from './utils/errors';
 
 export async function buildApp() {
@@ -33,7 +39,6 @@ export async function buildApp() {
   });
 
   // Global Error Handler (PRD §15 API Error Contract)
-  // Must be registered BEFORE route registration for proper Fastify encapsulation inheritance
   app.setErrorHandler((error: FastifyError | AppError, request: FastifyRequest, reply: FastifyReply) => {
     const requestId = request.id as string;
 
@@ -80,8 +85,15 @@ export async function buildApp() {
     return { status: 'healthy', timestamp: new Date().toISOString(), service: 'railline-api' };
   });
 
-  // Register routes under /api/v1/trains
+  // Register API routes
   await app.register(trainRoutes, { prefix: '/api/v1/trains' });
+  await app.register(analyticsRoutes, { prefix: '/api/v1/trains' });
+  await app.register(placesRoutes, { prefix: '/api/v1/trains' });
+  await app.register(trainWeatherRoutes, { prefix: '/api/v1/trains' });
+  await app.register(pointWeatherRoutes, { prefix: '/api/v1/weather' });
+  await app.register(sharingRoutes, { prefix: '/api/v1/journeys' });
+  await app.register(favoritesRoutes, { prefix: '/api/v1/favorites' });
+  await app.register(adminRoutes, { prefix: '/api/v1/admin' });
 
   return app;
 }
@@ -97,7 +109,6 @@ async function start() {
   }
 }
 
-// Only start the standalone server if not running in a test execution
 const isRunningTests = process.env.NODE_ENV === 'test' || process.argv.some((arg) => arg.includes('test'));
 
 if (!isRunningTests) {
