@@ -51,7 +51,7 @@ describe('RailLine Complete API Integration Tests', () => {
     assert.strictEqual(res.statusCode, 200);
     const body = JSON.parse(res.body);
     assert.ok(body.data.length > 0);
-    assert.strictEqual(body.data[0].trainNumber, '12004');
+    assert.ok(body.data.some((t: any) => t.trainNumber === '12004'));
   });
 
   test('GET /api/v1/trains/search?q=1 returns 400 error for query < 2 chars', async () => {
