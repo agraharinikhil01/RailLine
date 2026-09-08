@@ -21,6 +21,7 @@ export interface JourneyMapProps {
   onStationSelect?: (station: JourneyStation) => void;
   onToggleSidebar?: () => void;
   isSidebarOpen?: boolean;
+  showHudPill?: boolean;
 }
 
 // MapTiler Dataviz Dark style with Carto Dark Matter fallback (PRD §4.2)
@@ -38,6 +39,7 @@ export const JourneyMap: React.FC<JourneyMapProps> = ({
   onStationSelect,
   onToggleSidebar,
   isSidebarOpen = true,
+  showHudPill = false,
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -358,27 +360,43 @@ export const JourneyMap: React.FC<JourneyMapProps> = ({
       {/* MapLibre Canvas Container */}
       <div ref={mapContainerRef} className="w-full h-full min-h-0" />
 
-      {/* Top Left Floating Train HUD Pill */}
-      <div
-        className={`absolute top-4 transition-all duration-200 z-20 pointer-events-none ${
-          !isSidebarOpen ? 'left-36 sm:left-48' : 'left-4'
-        }`}
-      >
-        <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl bg-slate-900/90 border border-slate-700/80 text-xs font-mono text-slate-200 shadow-floating backdrop-blur-md">
-          <div className="w-2.5 h-2.5 rounded-full bg-sky-400 animate-ping" />
-          <span className="font-bold text-white tracking-wide">{status.trainNumber}</span>
-          <span className="text-slate-500">•</span>
-          <span className="font-semibold text-sky-400">{status.location.speedKmph || 0} km/h</span>
-          {status.currentStation && (
-            <>
-              <span className="text-slate-500">•</span>
-              <span className="text-slate-300 font-sans truncate max-w-[140px]">
-                {status.currentStation.name}
-              </span>
-            </>
-          )}
+      {/* Top Left Floating Train HUD Pill (optional) */}
+      {showHudPill && (
+        <div
+          className={`absolute top-4 transition-all duration-200 z-20 pointer-events-none ${
+            !isSidebarOpen ? 'left-36 sm:left-48' : 'left-4'
+          }`}
+        >
+          <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl bg-slate-900/90 border border-slate-700/80 text-xs font-mono text-slate-200 shadow-floating backdrop-blur-md">
+            <div className="w-2.5 h-2.5 rounded-full bg-sky-400 animate-ping" />
+            <span className="font-bold text-white tracking-wide">{status.trainNumber}</span>
+            <span className="text-slate-500">•</span>
+            <span className="font-semibold text-sky-400">{status.location.speedKmph || 0} km/h</span>
+            {status.currentStation && (
+              <>
+                <span className="text-slate-500">•</span>
+                <span className="text-slate-300 font-sans truncate max-w-[140px]">
+                  {status.currentStation.name}
+                </span>
+              </>
+            )}
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Bottom Left Following Train Pill (matches screenshot 1) */}
+      {isFollowMode && (
+        <div className="absolute bottom-4 left-4 z-20">
+          <button
+            type="button"
+            onClick={handleToggleFollow}
+            className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900/85 hover:bg-slate-900 border border-slate-700/80 text-xs font-medium text-slate-200 shadow-floating backdrop-blur-md transition-all active:scale-95"
+          >
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span>Following Train</span>
+          </button>
+        </div>
+      )}
 
       {/* Floating Controls Bar (Top Right) */}
       <div className="absolute top-4 right-4 flex flex-col gap-1.5 z-20">

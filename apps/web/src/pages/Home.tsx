@@ -81,7 +81,7 @@ export const Home: React.FC = () => {
   };
 
   const handleQuickSearch = (number: string) => {
-    navigate(`/journey/${number}`);
+    setSearchTerm(number);
   };
 
   // If user has no recent searches stored yet, display the default popular searches from screenshot
@@ -142,68 +142,80 @@ export const Home: React.FC = () => {
               </span>
             </div>
 
-            {/* Quick Search Chips */}
+            {/* Quick Search Chips with Active State (screenshot 2) */}
             <div className="flex flex-wrap items-center justify-center gap-2 mt-4 text-xs text-slate-400">
               <span className="font-medium text-slate-400">Quick search:</span>
-              {QUICK_SEARCH_CHIPS.map((chip) => (
-                <button
-                  key={chip.number}
-                  type="button"
-                  onClick={() => handleQuickSearch(chip.number)}
-                  className="px-2.5 py-1 rounded-full bg-white hover:bg-sky-50 border border-slate-200/90 text-slate-600 hover:text-sky-600 hover:border-sky-200 text-[11px] font-mono font-medium transition-all shadow-2xs"
-                >
-                  {chip.label}
-                </button>
-              ))}
+              {QUICK_SEARCH_CHIPS.map((chip) => {
+                const isActive = searchTerm.trim().includes(chip.number);
+                return (
+                  <button
+                    key={chip.number}
+                    type="button"
+                    onClick={() => handleQuickSearch(chip.number)}
+                    className={`px-2.5 py-1 rounded-full text-[11px] font-mono font-medium transition-all shadow-2xs ${
+                      isActive
+                        ? 'bg-sky-500 text-white font-semibold shadow-sm border border-sky-600'
+                        : 'bg-white hover:bg-sky-50 border border-slate-200/90 text-slate-600 hover:text-sky-600 hover:border-sky-200'
+                    }`}
+                  >
+                    {chip.label}
+                  </button>
+                );
+              })}
             </div>
-          </div>
-        </div>
 
-        {/* ========================================================================= */}
-        {/* SEARCH RESULTS DROPDOWN / SECTION (when user is searching)                */}
-        {/* ========================================================================= */}
-        {debouncedTerm.length >= 2 && (
-          <div className="max-w-2xl mx-auto space-y-3">
-            {isLoading && (
-              <div className="space-y-3">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="p-4 bg-white border border-slate-200 rounded-xl space-y-2">
-                    <div className="flex items-center gap-3">
-                      <Skeleton className="w-10 h-10 rounded-lg" />
-                      <div className="space-y-1.5 flex-1">
+            {/* ========================================================================= */}
+            {/* SEARCH RESULTS DIRECTLY INSIDE HERO CARD (Screenshot 2)                  */}
+            {/* ========================================================================= */}
+            {debouncedTerm.length >= 2 && (
+              <div className="mt-6 pt-4 border-t border-sky-100/90 text-left space-y-3">
+                <div className="flex items-center justify-between px-1 text-xs">
+                  <span className="font-bold text-slate-400 uppercase tracking-wider text-[11px]">
+                    SEARCH RESULTS ({results.length})
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setSearchTerm('')}
+                    className="text-xs text-slate-400 hover:text-slate-600 font-medium transition-colors"
+                  >
+                    Close
+                  </button>
+                </div>
+
+                {isLoading && (
+                  <div className="space-y-2">
+                    {[1, 2].map((i) => (
+                      <div key={i} className="p-4 bg-white border border-slate-200 rounded-xl space-y-2">
                         <Skeleton className="w-1/3 h-4" />
                         <Skeleton className="w-2/3 h-3" />
                       </div>
-                    </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            )}
+                )}
 
-            {!isLoading && results.length > 0 && (
-              <div className="space-y-2.5">
-                <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider px-1">
-                  Matching Trains ({results.length})
-                </div>
-                {results.map((train) => (
-                  <TrainSearchResultCard
-                    key={train.trainNumber}
-                    train={train}
-                    onClick={() => handleSelectTrain(train)}
+                {!isLoading && results.length > 0 && (
+                  <div className="space-y-2">
+                    {results.map((train) => (
+                      <TrainSearchResultCard
+                        key={train.trainNumber}
+                        train={train}
+                        onClick={() => handleSelectTrain(train)}
+                      />
+                    ))}
+                  </div>
+                )}
+
+                {!isLoading && results.length === 0 && (
+                  <EmptyState
+                    icon={Search}
+                    title="No trains found"
+                    description={`No trains matched "${debouncedTerm}". Try a different number or name.`}
                   />
-                ))}
+                )}
               </div>
-            )}
-
-            {!isLoading && results.length === 0 && (
-              <EmptyState
-                icon={Search}
-                title="No trains found"
-                description={`We couldn't find any trains matching "${debouncedTerm}". Try searching by train number (e.g. 12951) or station name.`}
-              />
             )}
           </div>
-        )}
+        </div>
 
         {/* ========================================================================= */}
         {/* RECENT SEARCHES: 2-Column Cards Grid matching screenshot 2                */}
