@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   CheckCircle2,
   History,
@@ -6,9 +6,11 @@ import {
   AlertTriangle,
   CalendarSearch,
   Filter,
+  Loader2,
+  ArrowRight,
 } from 'lucide-react';
 import { JourneyStation } from '@railline/types';
-import { StationDelayPoint } from '../../services/trainService';
+import { StationDelayPoint, HistoricalTripData, trainApi } from '../../services/trainService';
 import { DelayChart } from './DelayChart';
 
 export interface PastDelayHistoryCardProps {
@@ -62,11 +64,44 @@ export const PastDelayHistoryCard: React.FC<PastDelayHistoryCardProps> = ({
   const [activeView, setActiveView] = useState<'datePicker' | 'stations' | 'recentDays' | 'chart'>('datePicker');
   const [selectedDate, setSelectedDate] = useState<string>(yesterdayStr);
 
+  // Real Historical Telemetry State
+  const [historicalData, setHistoricalData] = useState<HistoricalTripData | null>(null);
+  const [isHistoryLoading, setIsHistoryLoading] = useState<boolean>(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+
   const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const activeDaysSet = useMemo(
     () => new Set(operatingDays.map((d) => d.toLowerCase().slice(0, 3))),
     [operatingDays]
   );
+
+  // Fetch real historical train run data from NTES/RailRadar whenever selectedDate or trainNumber changes
+  useEffect(() => {
+    if (!selectedDate || !trainNumber) return;
+
+    let isCancelled = false;
+    setIsHistoryLoading(true);
+    setHistoryError(null);
+
+    trainApi.getHistoricalTrip(trainNumber, selectedDate)
+      .then((data) => {
+        if (!isCancelled) {
+          setHistoricalData(data);
+          setIsHistoryLoading(false);
+        }
+      })
+      .catch((err) => {
+        if (!isCancelled) {
+          console.error('[PastDelayHistory] Failed to fetch historical run:', err);
+          setIsHistoryLoading(false);
+          setHistoryError('Unable to load official historical data for this date.');
+        }
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [trainNumber, selectedDate]);
 
   // Filter completed stations (stations where train has already arrived / passed on current trip)
   const completedStations = timeline.filter((s) => s.status === 'COMPLETED');
@@ -95,7 +130,7 @@ export const PastDelayHistoryCard: React.FC<PastDelayHistoryCardProps> = ({
     return `+${minutes}m delay`;
   };
 
-  // Generate past 7-day performance history
+  // Generate past 7-day performance overview
   const past7Days: HistoricalRunDay[] = [];
   for (let i = 1; i <= 7; i++) {
     const d = new Date();
@@ -133,81 +168,19 @@ export const PastDelayHistoryCard: React.FC<PastDelayHistoryCardProps> = ({
     });
   }
 
-  // Dynamic Selected Date Analysis
-  const selectedDateDetails = useMemo(() => {
-    if (!selectedDate) return null;
+  // Helper to format selected date label
+  const selectedDateLabel = useMemo(() => {
+    if (!selectedDate) return '';
     const [y, m, d] = selectedDate.split('-').map(Number);
     const dateObj = new Date(y, (m || 1) - 1, d || 1);
-    const dayIndex = dateObj.getDay();
-    const dayCode = DAY_NAMES[dayIndex];
-    const isRunDay = activeDaysSet.has(dayCode.toLowerCase());
-
-    const isToday = selectedDate === todayStr;
-
-    // Deterministic pseudo-random seed based on trainNumber and selectedDate
-    const dateSeed = (parseInt(trainNumber, 10) || 12556) * 37 + (d || 1) * 19 + (m || 1) * 7;
-    const pseudo = (Math.sin(dateSeed) + 1) / 2;
-
-    const arrivalDelay = isRunDay
-      ? Math.round(currentDelayMinutes > 25 ? currentDelayMinutes * (0.6 + pseudo * 0.55) : pseudo * 32)
-      : 0;
-
-    let tripStatus: 'ON TIME' | 'SLIGHT DELAY' | 'DELAYED' | 'NOT SCHEDULED' = 'ON TIME';
-    if (!isRunDay) {
-      tripStatus = 'NOT SCHEDULED';
-    } else if (arrivalDelay > 30) {
-      tripStatus = 'DELAYED';
-    } else if (arrivalDelay > 10) {
-      tripStatus = 'SLIGHT DELAY';
-    }
-
-    const dateFormatted = dateObj.toLocaleDateString('en-IN', {
+    return dateObj.toLocaleDateString('en-IN', {
       weekday: 'long',
       day: 'numeric',
       month: 'short',
       year: 'numeric',
     });
+  }, [selectedDate]);
 
-    // Generate station timeline records for this selected date
-    const stationRecords = timeline.map((station, idx) => {
-      const progress = (idx + 1) / Math.max(1, timeline.length);
-      const stnDelay = isRunDay
-        ? Math.max(0, Math.round(arrivalDelay * Math.min(1.25, 0.35 + progress * 0.8 + Math.sin(dateSeed + idx) * 0.12)))
-        : 0;
-
-      const sched = station.scheduledArrival || station.scheduledDeparture || '12:00';
-      let actual = sched;
-      if (sched.includes(':')) {
-        const [sh, sm] = sched.split(':').map(Number);
-        if (!isNaN(sh) && !isNaN(sm)) {
-          const tot = sh * 60 + sm + stnDelay;
-          const nh = Math.floor(tot / 60) % 24;
-          const nm = tot % 60;
-          actual = `${String(nh).padStart(2, '0')}:${String(nm).padStart(2, '0')}`;
-        }
-      }
-
-      return {
-        ...station,
-        delayMinutes: stnDelay,
-        actualArrival: actual,
-        actualDeparture: actual,
-        status: 'COMPLETED' as const,
-      };
-    });
-
-    return {
-      dateFormatted,
-      dayCode,
-      isRunDay,
-      isToday,
-      arrivalDelay,
-      tripStatus,
-      stationRecords,
-    };
-  }, [selectedDate, todayStr, activeDaysSet, trainNumber, currentDelayMinutes, timeline]);
-
-  // Quick select helper
   const setRelativeDay = (daysAgo: number) => {
     const d = new Date();
     d.setDate(d.getDate() - daysAgo);
@@ -229,11 +202,11 @@ export const PastDelayHistoryCard: React.FC<PastDelayHistoryCardProps> = ({
                 Past Delays & Date History
               </h3>
               <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wide bg-sky-50 text-sky-700 border border-sky-200">
-                Custom Date Telemetry
+                Official NTES / RailRadar Records
               </span>
             </div>
             <p className="text-xs text-slate-500 mt-0.5">
-              Select any past date to view punctuality, station delays, and trip records for {trainName ? `${trainName} (#${trainNumber})` : `#${trainNumber}`}
+              Select any past date to view authentic arrival, departure, and checkpoint delay records for {trainName ? `${trainName} (#${trainNumber})` : `#${trainNumber}`}
             </p>
           </div>
         </div>
@@ -338,7 +311,7 @@ export const PastDelayHistoryCard: React.FC<PastDelayHistoryCardProps> = ({
         </div>
       </div>
 
-      {/* 3. VIEW 1: Interactive Date Selector & Historical Run Inspection */}
+      {/* 3. VIEW 1: Interactive Date Selector & Real Historical Run Inspection */}
       {activeView === 'datePicker' && (
         <div className="space-y-4">
           {/* Interactive Date Selection Control Bar */}
@@ -347,7 +320,7 @@ export const PastDelayHistoryCard: React.FC<PastDelayHistoryCardProps> = ({
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-sky-600" />
                 <span className="text-xs sm:text-sm font-bold text-slate-800">
-                  Select Specific Date for Historical Data:
+                  Select Specific Date for Real Trip Data:
                 </span>
               </div>
 
@@ -408,17 +381,43 @@ export const PastDelayHistoryCard: React.FC<PastDelayHistoryCardProps> = ({
             </div>
           </div>
 
+          {/* Loading Indicator */}
+          {isHistoryLoading && (
+            <div className="p-8 rounded-2xl border border-slate-200/80 bg-slate-50/50 flex flex-col items-center justify-center gap-2.5 text-center">
+              <Loader2 className="w-6 h-6 text-sky-600 animate-spin" />
+              <p className="text-xs font-semibold text-slate-700">
+                Fetching authentic NTES/RailRadar trip records for {selectedDateLabel}...
+              </p>
+              <p className="text-[11px] text-slate-400">
+                Retrieving exact scheduled vs actual arrival & departure times
+              </p>
+            </div>
+          )}
+
+          {/* Error Notice */}
+          {!isHistoryLoading && historyError && (
+            <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+              <div className="text-xs">
+                <p className="font-bold">{historyError}</p>
+                <p className="mt-0.5 text-amber-700">
+                  Please verify that the date is within the operational range of Indian Railways records.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Selected Date Summary & Station Timetable */}
-          {selectedDateDetails && (
+          {!isHistoryLoading && historicalData && (
             <div className="space-y-3">
               {/* Day Summary Card */}
               <div
                 className={`p-4 rounded-2xl border transition-all ${
-                  !selectedDateDetails.isRunDay
+                  !historicalData.isRunDay || historicalData.status === 'NOT SCHEDULED'
                     ? 'bg-slate-50 border-slate-200/80'
-                    : selectedDateDetails.tripStatus === 'ON TIME'
+                    : historicalData.status === 'ON TIME'
                     ? 'bg-emerald-50/50 border-emerald-200/80 shadow-2xs'
-                    : selectedDateDetails.tripStatus === 'SLIGHT DELAY'
+                    : historicalData.status === 'SLIGHT DELAY'
                     ? 'bg-amber-50/50 border-amber-200/80 shadow-2xs'
                     : 'bg-rose-50/50 border-rose-200/80 shadow-2xs'
                 }`}
@@ -427,34 +426,35 @@ export const PastDelayHistoryCard: React.FC<PastDelayHistoryCardProps> = ({
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-bold text-slate-900">
-                        {selectedDateDetails.dateFormatted}
+                        {selectedDateLabel}
                       </span>
-                      {selectedDateDetails.isToday && (
+                      {selectedDate === todayStr && (
                         <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-100 text-sky-800">
                           Today (Live In Progress)
                         </span>
                       )}
                     </div>
                     <p className="text-xs text-slate-500 mt-0.5">
-                      Train #{trainNumber} operation record for this day ({selectedDateDetails.dayCode})
+                      Train #{trainNumber} {historicalData.trainName ? `(${historicalData.trainName})` : ''} • {historicalData.dayOfWeek} trip record
                     </p>
                   </div>
 
-                  {/* Operational Status Pill */}
+                  {/* Destination Arrival Status Pill */}
                   <div className="flex items-center gap-2">
-                    {selectedDateDetails.isRunDay ? (
+                    {historicalData.isRunDay && historicalData.stops.length > 0 ? (
                       <div className="flex items-center gap-2">
                         <span className="text-xs text-slate-600 font-medium">Destination Arrival:</span>
                         <span
                           className={`text-xs font-mono font-bold px-2.5 py-1 rounded-lg ${
-                            selectedDateDetails.tripStatus === 'ON TIME'
+                            historicalData.status === 'ON TIME'
                               ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                              : selectedDateDetails.tripStatus === 'SLIGHT DELAY'
+                              : historicalData.status === 'SLIGHT DELAY'
                               ? 'bg-amber-100 text-amber-800 border border-amber-200'
                               : 'bg-rose-100 text-rose-800 border border-rose-200'
                           }`}
                         >
-                          {formatDelay(selectedDateDetails.arrivalDelay)}
+                          {formatDelay(historicalData.destinationDelayMinutes)}
+                          {historicalData.destinationDelayMinutes > 0 && ` (${historicalData.destinationDelayMinutes} mins)`}
                         </span>
                       </div>
                     ) : (
@@ -465,16 +465,16 @@ export const PastDelayHistoryCard: React.FC<PastDelayHistoryCardProps> = ({
                   </div>
                 </div>
 
-                {!selectedDateDetails.isRunDay && (
+                {(!historicalData.isRunDay || historicalData.status === 'NOT SCHEDULED') && (
                   <div className="mt-3 p-3 rounded-xl bg-white border border-slate-200/80 flex items-start gap-2.5">
                     <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                     <div className="text-xs text-slate-600">
                       <p className="font-semibold text-slate-800">
-                        Train #{trainNumber} did not run on this date ({selectedDateDetails.dayCode}).
+                        Train #{trainNumber} did not run on this date ({historicalData.dayOfWeek}).
                       </p>
                       <p className="mt-0.5">
                         This train operates on: <span className="font-mono font-bold text-sky-700">{operatingDays.join(', ')}</span>.
-                        Please select another date when the train operates.
+                        Please select an operating day to view records.
                       </p>
                     </div>
                   </div>
@@ -482,63 +482,132 @@ export const PastDelayHistoryCard: React.FC<PastDelayHistoryCardProps> = ({
               </div>
 
               {/* Station Checkpoints for this Selected Date */}
-              {selectedDateDetails.isRunDay && (
+              {historicalData.stops.length > 0 && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-xs text-slate-500 px-1">
                     <span className="font-semibold text-slate-700">
-                      Station Checkpoints on {selectedDateDetails.dateFormatted} ({selectedDateDetails.stationRecords.length} stops):
+                      Station Checkpoints on {selectedDateLabel} ({historicalData.stops.length} halts):
                     </span>
                     <span className="font-mono text-[11px] text-slate-400">Scheduled vs Actual IST</span>
                   </div>
 
-                  <div className="border border-slate-200/80 rounded-2xl overflow-hidden divide-y divide-slate-100 max-h-[360px] overflow-y-auto">
-                    {selectedDateDetails.stationRecords.map((station) => {
-                      const isDelayed = (station.delayMinutes || 0) > 5;
-                      const isMajor = (station.delayMinutes || 0) > 60;
-                      const sched = station.scheduledArrival || station.scheduledDeparture || '—';
-                      const actual = station.actualArrival || station.actualDeparture || sched;
+                  <div className="border border-slate-200/80 rounded-2xl overflow-hidden divide-y divide-slate-100 max-h-[420px] overflow-y-auto">
+                    {historicalData.stops.map((station) => {
+                      const isOrigin = station.isOrigin;
+                      const isDestination = station.isDestination;
+
+                      // Relevant delay and times
+                      const delay = isOrigin
+                        ? (station.delayDepartureMinutes ?? 0)
+                        : (station.delayArrivalMinutes ?? station.delayDepartureMinutes ?? 0);
+
+                      const isDelayed = delay > 5;
+                      const isMajor = delay > 60;
 
                       return (
                         <div
-                          key={station.station.code}
-                          className="p-3 sm:p-3.5 flex items-center justify-between gap-3 hover:bg-slate-50/60 transition-colors"
+                          key={station.stationCode}
+                          className="p-3 sm:p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 hover:bg-slate-50/60 transition-colors"
                         >
+                          {/* Station Identity & Origin/Dest Tag */}
                           <div className="flex items-center gap-3 min-w-0">
-                            <div className="w-6 h-6 rounded-full bg-sky-50 text-sky-600 flex items-center justify-center shrink-0 border border-sky-200">
-                              <CheckCircle2 className="w-3.5 h-3.5" />
+                            <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 border ${
+                              isOrigin
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200 font-bold text-xs'
+                                : isDestination
+                                ? 'bg-rose-50 text-rose-700 border-rose-200 font-bold text-xs'
+                                : 'bg-sky-50 text-sky-600 border-sky-200'
+                            }`}>
+                              {isOrigin ? 'S' : isDestination ? 'D' : <CheckCircle2 className="w-3.5 h-3.5" />}
                             </div>
                             <div className="min-w-0">
-                              <div className="flex items-center gap-1.5">
+                              <div className="flex items-center gap-1.5 flex-wrap">
                                 <span className="font-bold text-xs sm:text-sm text-slate-900 truncate">
-                                  {station.station.name}
+                                  {station.stationName}
                                 </span>
                                 <span className="font-mono text-xs font-semibold text-sky-600">
-                                  ({station.station.code})
+                                  ({station.stationCode})
                                 </span>
                                 {station.platform && (
-                                  <span className="text-[9px] font-mono font-medium px-1.5 py-0.2 rounded bg-slate-100 text-slate-500">
+                                  <span className="text-[9px] font-mono font-medium px-1.5 py-0.2 rounded bg-slate-100 text-slate-600">
                                     PF {station.platform}
+                                  </span>
+                                )}
+                                {isOrigin && (
+                                  <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800">
+                                    Source
+                                  </span>
+                                )}
+                                {isDestination && (
+                                  <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-rose-100 text-rose-800">
+                                    Destination
                                   </span>
                                 )}
                               </div>
                               <span className="text-[11px] text-slate-400 font-mono">
-                                {station.distanceFromSourceKm} km from origin
+                                {station.distanceKm} km from origin
                               </span>
                             </div>
                           </div>
 
-                          <div className="text-right shrink-0">
-                            <div className="flex items-center gap-1.5 sm:gap-2 justify-end">
-                              <span className="text-xs font-mono text-slate-400 line-through hidden sm:inline">
-                                {sched}
-                              </span>
-                              <span className="text-xs sm:text-sm font-mono font-bold text-slate-800">
-                                {actual}
-                              </span>
+                          {/* Scheduled vs Actual Times & Delay Badge */}
+                          <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4 shrink-0 pl-10 sm:pl-0">
+                            {/* Time details */}
+                            <div className="text-left sm:text-right">
+                              {isOrigin ? (
+                                <div>
+                                  <div className="flex items-center gap-1 sm:justify-end text-xs font-mono">
+                                    <span className="text-slate-400 line-through">
+                                      {station.scheduledDeparture || '—'}
+                                    </span>
+                                    <ArrowRight className="w-3 h-3 text-slate-300 inline" />
+                                    <span className="font-bold text-slate-900">
+                                      {station.actualDeparture || station.scheduledDeparture || '—'}
+                                    </span>
+                                  </div>
+                                  <span className="text-[10px] text-slate-400 font-medium block">
+                                    Departure Time
+                                  </span>
+                                </div>
+                              ) : isDestination ? (
+                                <div>
+                                  <div className="flex items-center gap-1 sm:justify-end text-xs font-mono">
+                                    <span className="text-slate-400 line-through">
+                                      {station.scheduledArrival || '—'}
+                                    </span>
+                                    <ArrowRight className="w-3 h-3 text-slate-300 inline" />
+                                    <span className="font-bold text-slate-900">
+                                      {station.actualArrival || station.scheduledArrival || '—'}
+                                    </span>
+                                  </div>
+                                  <span className="text-[10px] text-slate-400 font-medium block">
+                                    Arrival Time
+                                  </span>
+                                </div>
+                              ) : (
+                                <div>
+                                  <div className="flex items-center gap-1 sm:justify-end text-xs font-mono">
+                                    <span className="text-slate-400 line-through">
+                                      {station.scheduledArrival || station.scheduledDeparture || '—'}
+                                    </span>
+                                    <ArrowRight className="w-3 h-3 text-slate-300 inline" />
+                                    <span className="font-bold text-slate-900">
+                                      {station.actualArrival || station.actualDeparture || station.scheduledArrival || '—'}
+                                    </span>
+                                  </div>
+                                  {station.actualDeparture && station.actualDeparture !== station.actualArrival && (
+                                    <span className="text-[10px] text-slate-400 font-mono block">
+                                      Dep: {station.actualDeparture}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
                             </div>
-                            <div className="mt-0.5">
+
+                            {/* Delay badge */}
+                            <div className="text-right">
                               <span
-                                className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded-full ${
+                                className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded-full inline-block ${
                                   isMajor
                                     ? 'bg-rose-50 text-rose-700 border border-rose-200'
                                     : isDelayed
@@ -546,7 +615,11 @@ export const PastDelayHistoryCard: React.FC<PastDelayHistoryCardProps> = ({
                                     : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                                 }`}
                               >
-                                {formatDelay(station.delayMinutes || 0)}
+                                {isOrigin ? (
+                                  delay > 0 ? `+${formatDelay(delay).replace('+', '')} dep` : 'Departed On Time'
+                                ) : (
+                                  formatDelay(delay)
+                                )}
                               </span>
                             </div>
                           </div>

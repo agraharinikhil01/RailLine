@@ -216,14 +216,17 @@ async function getOrFetchSchedule(trainNumber: string) {
   return null;
 }
 
-async function getOrFetchLive(trainNumber: string) {
-  const cached = liveCache.get(trainNumber);
-  if (cached && Date.now() - cached.ts < 15000) {
+async function getOrFetchLive(trainNumber: string, date?: string) {
+  const cacheKey = date ? `${trainNumber}_${date}` : trainNumber;
+  const cached = liveCache.get(cacheKey);
+  const ttl = date ? 300000 : 15000; // 5 min cache for past dates, 15 sec for live
+  if (cached && Date.now() - cached.ts < ttl) {
     return cached.data;
   }
-  const resp = await fetchFromRailRadarDirect(`/trains/${trainNumber}/live`);
+  const query = date ? `?date=${encodeURIComponent(date)}` : '';
+  const resp = await fetchFromRailRadarDirect(`/trains/${trainNumber}/live${query}`);
   if (resp?.data) {
-    liveCache.set(trainNumber, { data: resp.data, ts: Date.now() });
+    liveCache.set(cacheKey, { data: resp.data, ts: Date.now() });
     return resp.data;
   }
   return cached?.data || null;
@@ -281,6 +284,8 @@ const POPULAR_SEARCH_CATALOG: SearchCatalogEntry[] = [
 
 export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
   const clean = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
+  const queryString = endpoint.includes('?') ? endpoint.split('?')[1] : '';
+  const searchParams = new URLSearchParams(queryString);
   const parts = clean.split('?')[0].split('/');
 
   // 1. Search Trains: trains/search?q=...
@@ -418,6 +423,78 @@ export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
     getOrFetchLive(trainNumber),
   ]);
   const dbData = TRAINS_DATABASE[trainNumber] || TRAINS_DATABASE['12951'];
+
+  // 1c. Historical / Date-specific Trip: trains/:trainNumber/historical?date=YYYY-MM-DD
+  if (parts[0] === 'trains' && sub === 'historical') {
+    const targetDate = searchParams.get('date') || '';
+    const [liveSched, dateData] = await Promise.all([
+      getOrFetchSchedule(trainNumber),
+      targetDate ? getOrFetchLive(trainNumber, targetDate) : null,
+    ]);
+
+    const trainName = liveSched?.train?.name || dbData.train.name || `Train ${trainNumber}`;
+    const haltStops: any[] = (dateData?.route || []).filter((r: any) => r.isHalt);
+
+    const dateObj = targetDate ? new Date(targetDate + 'T12:00:00') : new Date();
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const dayOfWeek = dayNames[dateObj.getDay()] || '';
+
+    const runDays = ((liveSched?.train?.runDays || ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']) as string[]).map((d: string) => d.toLowerCase().slice(0, 3));
+    const isRunDay = runDays.includes(dayOfWeek.toLowerCase());
+
+    if (haltStops.length > 0) {
+      const lastHalt = haltStops[haltStops.length - 1];
+      const destDelay = Math.round(dateData.delayMinutes ?? lastHalt.delayArrival ?? 0);
+
+      const stops = haltStops.map((s: any, idx: number) => {
+        const isOrigin = idx === 0;
+        const isDestination = idx === haltStops.length - 1;
+        return {
+          sequence: s.sequence || (idx + 1),
+          stationCode: s.stationCode || '',
+          stationName: s.stationName || '',
+          platform: s.platform,
+          distanceKm: Math.round(s.distance || 0),
+          scheduledArrival: isoToHHMM(s.scheduledArrival),
+          actualArrival: isoToHHMM(s.actualArrival),
+          delayArrivalMinutes: s.delayArrival != null ? Math.round(s.delayArrival) : undefined,
+          scheduledDeparture: isoToHHMM(s.scheduledDeparture),
+          actualDeparture: isoToHHMM(s.actualDeparture),
+          delayDepartureMinutes: s.delayDeparture != null ? Math.round(s.delayDeparture) : undefined,
+          isHalt: true,
+          isOrigin,
+          isDestination,
+          status: s.status,
+        };
+      });
+
+      const tripStatus = destDelay <= 15 ? 'ON TIME' : destDelay <= 45 ? 'SLIGHT DELAY' : 'DELAYED';
+
+      return {
+        trainNumber,
+        trainName,
+        date: targetDate,
+        dayOfWeek,
+        destinationDelayMinutes: destDelay,
+        destinationScheduledArrival: isoToHHMM(lastHalt.scheduledArrival),
+        destinationActualArrival: isoToHHMM(lastHalt.actualArrival),
+        status: tripStatus,
+        isRunDay: true,
+        stops,
+      } as unknown as T;
+    }
+
+    return {
+      trainNumber,
+      trainName,
+      date: targetDate,
+      dayOfWeek,
+      destinationDelayMinutes: 0,
+      status: isRunDay ? 'ON TIME' : 'NOT SCHEDULED',
+      isRunDay,
+      stops: [],
+    } as unknown as T;
+  }
 
   // 2. Train Details: trains/:trainNumber
   if (parts[0] === 'trains' && parts.length === 2) {

@@ -27,10 +27,44 @@ export interface StationDelayPoint {
   distanceKm: number;
 }
 
+export interface HistoricalTripStop {
+  sequence: number;
+  stationCode: string;
+  stationName: string;
+  platform?: string;
+  distanceKm: number;
+  scheduledArrival?: string;
+  actualArrival?: string;
+  delayArrivalMinutes?: number;
+  scheduledDeparture?: string;
+  actualDeparture?: string;
+  delayDepartureMinutes?: number;
+  isHalt: boolean;
+  isOrigin: boolean;
+  isDestination: boolean;
+}
+
+export interface HistoricalTripData {
+  trainNumber: string;
+  trainName: string;
+  date: string;
+  dayOfWeek: string;
+  destinationDelayMinutes: number;
+  destinationScheduledArrival?: string;
+  destinationActualArrival?: string;
+  status: 'ON TIME' | 'SLIGHT DELAY' | 'DELAYED' | 'NOT SCHEDULED';
+  isRunDay: boolean;
+  stops: HistoricalTripStop[];
+}
+
 export const trainApi = {
   // --- Phase 1 ---
   searchTrains: async (query: string): Promise<TrainSearchResult[]> => {
     return apiClient<TrainSearchResult[]>(`/trains/search?q=${encodeURIComponent(query)}`);
+  },
+
+  getHistoricalTrip: async (trainNumber: string, date: string): Promise<HistoricalTripData> => {
+    return apiClient<HistoricalTripData>(`/trains/${encodeURIComponent(trainNumber)}/historical?date=${encodeURIComponent(date)}`);
   },
 
   getTrainDetails: async (trainNumber: string): Promise<Train> => {
