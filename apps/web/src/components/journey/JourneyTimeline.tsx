@@ -103,7 +103,10 @@ export const JourneyTimeline: React.FC<JourneyTimelineProps> = ({
                 <div className="mt-0.5">
                   {item.delayMinutes > 0 ? (
                     <span className="text-[11px] font-mono text-amber-600 font-medium">
-                      +{item.delayMinutes}m delay
+                      +{item.delayMinutes >= 60
+                        ? `${Math.floor(item.delayMinutes / 60)}h ${item.delayMinutes % 60}m`
+                        : `${item.delayMinutes}m`}{' '}
+                      delay
                     </span>
                   ) : (
                     <span className="text-[11px] font-mono text-emerald-600 font-medium">

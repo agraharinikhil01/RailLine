@@ -188,7 +188,11 @@ export const TrackingPage: React.FC = () => {
                   status.status === 'ON TIME' ? 'bg-emerald-500' : 'bg-amber-500'
                 } animate-pulse`}
               />
-              {status.status === 'ON TIME' ? 'ON TIME' : `${status.delayMinutes}m DELAYED`}
+              {status.status === 'ON TIME'
+                ? 'ON TIME'
+                : status.delayMinutes >= 60
+                ? `${Math.floor(status.delayMinutes / 60)}h ${status.delayMinutes % 60}m DELAYED`
+                : `${status.delayMinutes}m DELAYED`}
             </span>
           </div>
 
@@ -266,7 +270,11 @@ export const TrackingPage: React.FC = () => {
                 <span className="text-xs text-slate-500 font-medium block mt-0.5">
                   Status:{' '}
                   <span className={status.delayMinutes > 5 ? 'font-bold text-amber-600' : 'font-bold text-emerald-600'}>
-                    {status.delayMinutes > 0 ? `${status.delayMinutes}m Late` : 'On Time'}
+                    {status.delayMinutes > 0
+                      ? status.delayMinutes >= 60
+                        ? `${Math.floor(status.delayMinutes / 60)}h ${status.delayMinutes % 60}m Late`
+                        : `${status.delayMinutes}m Late`
+                      : 'On Time'}
                   </span>
                 </span>
               </div>

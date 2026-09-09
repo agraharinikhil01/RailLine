@@ -213,8 +213,17 @@ export class RailRadarProvider implements TrainProvider {
     // Exact 5-digit number lookup — query live API first
     if (/^\d{5}$/.test(q)) {
       try {
-        const resp = await this.fetchSchedule(q);
-        return [this.scheduleToSearchResult(resp.data.train, resp.data.route)];
+        const [schedResp, liveResp] = await Promise.all([
+          this.fetchSchedule(q),
+          rrFetch<RRLiveResponse>(`/trains/${q}/live`, this.apiKey).catch(() => null),
+        ]);
+        const result = this.scheduleToSearchResult(schedResp.data.train, schedResp.data.route);
+        if (liveResp?.data) {
+          const dMin = Math.round(liveResp.data.delayMinutes ?? 0);
+          result.currentDelayMinutes = dMin;
+          result.status = dMin > 5 ? 'DELAYED' : 'ON TIME';
+        }
+        return [result];
       } catch {
         // Fall back to mock if RailRadar lookup fails
         return this.mockFallback.searchTrains(q);

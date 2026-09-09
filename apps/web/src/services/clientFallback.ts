@@ -186,6 +186,24 @@ async function fetchFromRailRadarDirect(endpoint: string) {
   return null;
 }
 
+function isoToHHMM(iso?: string): string | undefined {
+  if (!iso) return undefined;
+  if (/^\d{1,2}:\d{2}$/.test(iso)) return iso;
+  try {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return undefined;
+    return d.toLocaleTimeString('en-GB', {
+      timeZone: 'Asia/Kolkata',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+  } catch {
+    return undefined;
+  }
+}
+
+
 async function getOrFetchSchedule(trainNumber: string) {
   if (scheduleCache.has(trainNumber)) {
     return scheduleCache.get(trainNumber);
@@ -301,10 +319,16 @@ export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
       }
     }
 
-    // 1b. If exact 5-digit number, fetch schedule live from RailRadar API
+    // 1b. If exact 5-digit number, fetch schedule & live telemetry from RailRadar API
     if (/^\d{5}$/.test(query)) {
       try {
-        const liveSched = await getOrFetchSchedule(query);
+        const [liveSched, liveData] = await Promise.all([
+          getOrFetchSchedule(query),
+          getOrFetchLive(query),
+        ]);
+        const delay = liveData ? Math.round(liveData.delayMinutes ?? liveData.delay ?? 0) : 0;
+        const runStatus: RunningStatus = delay > 5 ? 'DELAYED' : 'ON TIME';
+
         if (liveSched?.train) {
           const t = liveSched.train;
           const r = liveSched.route || [];
@@ -321,8 +345,8 @@ export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
             departureTime: firstStop?.departure,
             arrivalTime: lastStop?.arrival,
             runningDays: t.runDays || ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-            status: 'ON TIME',
-            currentDelayMinutes: 0,
+            status: runStatus,
+            currentDelayMinutes: delay,
           };
 
           const existingIdx = results.findIndex((r) => r.trainNumber === (t.number || query));
@@ -332,6 +356,12 @@ export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
             results.unshift(liveResult);
           }
           seen.add(query);
+        } else if (seen.has(query)) {
+          const existing = results.find((r) => r.trainNumber === query);
+          if (existing) {
+            existing.status = runStatus;
+            existing.currentDelayMinutes = delay;
+          }
         }
       } catch {
         // silent fallback
@@ -353,6 +383,19 @@ export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
           currentDelayMinutes: 0,
         });
       }
+    } else if (results.length > 0) {
+      // For top match in text query, fetch live delay if possible
+      const top = results[0];
+      try {
+        const liveD = await getOrFetchLive(top.trainNumber);
+        if (liveD) {
+          const d = Math.round(liveD.delayMinutes ?? liveD.delay ?? 0);
+          top.currentDelayMinutes = d;
+          top.status = d > 5 ? 'DELAYED' : 'ON TIME';
+        }
+      } catch {
+        // ignore
+      }
     }
 
     // Exact matches first
@@ -369,8 +412,11 @@ export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
   const trainNumber = parts[1] || '12951';
   const sub = parts[2];
 
-  // Try live schedule from RailRadar first
-  const liveSched = await getOrFetchSchedule(trainNumber);
+  // Fetch live schedule and live tracking telemetry in parallel
+  const [liveSched, liveData] = await Promise.all([
+    getOrFetchSchedule(trainNumber),
+    getOrFetchLive(trainNumber),
+  ]);
   const dbData = TRAINS_DATABASE[trainNumber] || TRAINS_DATABASE['12951'];
 
   // 2. Train Details: trains/:trainNumber
@@ -403,12 +449,23 @@ export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
 
   // 3. Live Status: trains/:trainNumber/live
   if (parts[0] === 'trains' && sub === 'live') {
-    const liveData = await getOrFetchLive(trainNumber);
     if (liveData && liveSched) {
       const d = liveData;
       const currentLoc = d.currentLocation;
       const delay = Math.round(d.delayMinutes ?? d.delay ?? 0);
       const runStatus: RunningStatus = delay > 5 ? 'DELAYED' : 'ON TIME';
+
+      const schedBySeq = new Map<number, any>();
+      const schedByCode = new Map<string, any>();
+      for (const stop of (liveSched.route || [])) {
+        if (stop.sequence != null) schedBySeq.set(stop.sequence, stop);
+        if (stop.station?.code) schedByCode.set(stop.station.code, stop);
+      }
+
+      const haltRoutes: any[] = (d.route || []).filter((r: any) => r.isHalt);
+      const nextHaltStop = haltRoutes.find((r: any) => r.status === 'upcoming' || r.status === 'at-station') || d.nextHalt;
+      const prevHaltStop = haltRoutes.filter((r: any) => r.status === 'departed').pop() || d.previousHalt;
+      const lastHaltStop = haltRoutes[haltRoutes.length - 1];
 
       // Find current stop coords from schedule sequence
       let lat = currentLoc?.lat || 28.6429;
@@ -416,9 +473,9 @@ export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
       let speedKmph = currentLoc?.speed || 83;
       let bearing = 0;
 
-      if (currentLoc?.sequence && liveSched.route) {
-        const curStop = liveSched.route.find((s: any) => s.sequence === currentLoc.sequence);
-        const nextStop = liveSched.route.find((s: any) => s.sequence === currentLoc.sequence + 1);
+      if (currentLoc?.sequence && schedBySeq.size > 0) {
+        const curStop = schedBySeq.get(currentLoc.sequence);
+        const nextStop = schedBySeq.get(currentLoc.sequence + 1);
         if (curStop?.station) {
           lat = curStop.station.lat;
           lng = curStop.station.lng;
@@ -433,8 +490,23 @@ export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
         }
       }
 
-      const totalDist = Math.round(liveSched.train?.distance || 1386);
-      const covered = Math.round(currentLoc?.distanceFromOriginKm || d.previousHalt?.distance || 0);
+      const isStoppedAtHalt = currentLoc?.status === 'at-station' && currentLoc.isHalt;
+      const currentStationName = currentLoc?.stationName
+        ? isStoppedAtHalt
+          ? currentLoc.stationName
+          : `${currentLoc.stationName} (Passed)`
+        : prevHaltStop?.stationName
+        ? `${prevHaltStop.stationName} (Passed)`
+        : 'In Transit';
+
+      const currentStationCode = currentLoc?.stationCode || prevHaltStop?.stationCode || '';
+      const currentSched = schedByCode.get(currentStationCode);
+
+      const totalDist = Math.round(liveSched.train?.distance || lastHaltStop?.distance || 1000);
+      const covered = Math.round(currentLoc?.distanceFromOriginKm || prevHaltStop?.distance || 0);
+
+      const nextArr = isoToHHMM(nextHaltStop?.actualArrival || nextHaltStop?.scheduledArrival);
+      const destArr = isoToHHMM(lastHaltStop?.actualArrival || lastHaltStop?.scheduledArrival);
 
       const liveStatus: LiveTrainStatus = {
         trainNumber: d.trainNumber || trainNumber,
@@ -442,14 +514,20 @@ export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
         status: runStatus,
         delayMinutes: delay,
         currentStation: {
-          code: currentLoc?.stationCode || d.previousHalt?.stationCode || '',
-          name: currentLoc?.stationName ? `${currentLoc.stationName} (Passed)` : 'In Transit',
+          code: currentStationCode,
+          name: currentStationName,
+          platform: isStoppedAtHalt
+            ? haltRoutes.find((r: any) => r.stationCode === currentLoc?.stationCode)?.platform
+            : undefined,
+          scheduledArrival: isoToHHMM(currentSched?.arrival),
+          scheduledDeparture: isoToHHMM(currentSched?.departure),
         },
         nextStation: {
-          code: d.nextHalt?.stationCode || '',
-          name: d.nextHalt?.stationName || 'Next Halt',
-          platform: '1',
-          scheduledArrival: '—',
+          code: nextHaltStop?.stationCode || d.nextHalt?.stationCode || '',
+          name: nextHaltStop?.stationName || d.nextHalt?.stationName || 'Next Halt',
+          platform: nextHaltStop?.platform || '1',
+          scheduledArrival: isoToHHMM(nextHaltStop?.scheduledArrival) || '—',
+          scheduledDeparture: isoToHHMM(nextHaltStop?.scheduledDeparture),
         },
         location: {
           lat: Number(lat.toFixed(5)),
@@ -461,10 +539,10 @@ export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
         progressPercentage: totalDist > 0 ? Math.min(100, Math.round((covered / totalDist) * 100)) : 50,
         distanceCoveredKm: covered,
         distanceRemainingKm: Math.max(0, totalDist - covered),
-        etaNextStation: 'On Time',
-        etaDestination: 'On Time',
-        delayTrend: delay > 10 ? 'INCREASING' : 'STABLE',
-        lastUpdatedAt: new Date().toISOString(),
+        etaNextStation: nextArr || 'On Time',
+        etaDestination: destArr || 'On Time',
+        delayTrend: delay > 15 ? 'INCREASING' : delay > 5 ? 'STABLE' : 'DECREASING',
+        lastUpdatedAt: d.lastUpdatedAt || new Date().toISOString(),
         isStale: false,
       };
       return liveStatus as unknown as T;
@@ -495,24 +573,54 @@ export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
     if (liveSched?.route) {
       const allStops = liveSched.route.filter((s: any) => s.station?.lat && s.station?.lng);
       const coords: [number, number][] = allStops.map((s: any) => [s.station.lng, s.station.lat]);
-      const splitIdx = Math.floor(coords.length * 0.4);
+
+      let splitIdx = 0;
+      const currentSeq = liveData?.currentLocation?.sequence;
+      if (currentSeq) {
+        const foundIdx = allStops.findIndex((s: any) => s.sequence >= currentSeq);
+        if (foundIdx !== -1) {
+          splitIdx = foundIdx;
+        }
+      } else {
+        splitIdx = Math.floor(coords.length * 0.4);
+      }
+
+      const completedCoords = coords.slice(0, Math.min(splitIdx + 2, coords.length));
+      const remainingCoords = coords.slice(Math.max(0, splitIdx));
 
       const features: any[] = [
         {
           type: 'Feature',
           properties: { segment: 'completed', trainNumber },
-          geometry: { type: 'LineString', coordinates: coords.slice(0, splitIdx + 2) },
+          geometry: {
+            type: 'LineString',
+            coordinates: completedCoords.length >= 2 ? completedCoords : coords.slice(0, 2),
+          },
         },
         {
           type: 'Feature',
           properties: { segment: 'remaining', trainNumber },
-          geometry: { type: 'LineString', coordinates: coords.slice(splitIdx) },
+          geometry: {
+            type: 'LineString',
+            coordinates: remainingCoords.length >= 2 ? remainingCoords : coords,
+          },
         },
       ];
 
-      // Add all stations (both halts and intermediate dots)
-      allStops.forEach((stop: any, idx: number) => {
+      const liveHaltByCode = new Map<string, string>();
+      if (liveData?.route) {
+        for (const stop of liveData.route) {
+          if (stop.stationCode) liveHaltByCode.set(stop.stationCode, stop.status || 'upcoming');
+        }
+      }
+
+      allStops.forEach((stop: any) => {
         const isHalt = Boolean(stop.isHalt);
+        const ls = liveHaltByCode.get(stop.station.code);
+        const isNextHalt = stop.station.code === liveData?.nextHalt?.stationCode;
+        const isPast = stop.sequence && currentSeq ? stop.sequence < currentSeq : ls === 'departed';
+        const mappedStatus = isPast ? 'COMPLETED' : isNextHalt ? 'CURRENT' : 'UPCOMING';
+
         features.push({
           type: 'Feature',
           properties: {
@@ -520,8 +628,9 @@ export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
             name: stop.station.name,
             isHalt,
             stationType: isHalt ? 'halt' : 'intermediate',
-            status: idx <= splitIdx ? 'COMPLETED' : 'UPCOMING',
+            status: mappedStatus,
             platform: stop.platform,
+            isNextHalt,
           },
           geometry: {
             type: 'Point',
@@ -552,7 +661,53 @@ export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
 
   // 5. Timeline: trains/:trainNumber/timeline
   if (parts[0] === 'trains' && sub === 'timeline') {
-    if (liveSched?.route) {
+    if (liveData?.route && liveSched?.route) {
+      const schedByCode = new Map<string, any>();
+      for (const stop of liveSched.route) {
+        if (stop.station?.code) schedByCode.set(stop.station.code, stop);
+      }
+
+      const haltRoutes = (liveData.route as any[]).filter((r: any) => r.isHalt);
+      const currentSeq = liveData.currentLocation?.sequence || 0;
+
+      const stations: JourneyStation[] = haltRoutes.map((stop: any) => {
+        const sched = schedByCode.get(stop.stationCode || '');
+        const stationObj = {
+          code: stop.stationCode || '',
+          name: stop.stationName || '',
+          latitude: sched?.station?.lat || 0,
+          longitude: sched?.station?.lng || 0,
+        };
+
+        let status: 'COMPLETED' | 'CURRENT' | 'UPCOMING';
+        if (stop.status === 'departed' || (stop.sequence && stop.sequence < currentSeq)) {
+          status = 'COMPLETED';
+        } else if (stop.stationCode === liveData.nextHalt?.stationCode || stop.status === 'at-station') {
+          status = 'CURRENT';
+        } else {
+          status = 'UPCOMING';
+        }
+
+        const delay = Math.round(stop.delayArrival ?? stop.delayDeparture ?? liveData.delayMinutes ?? 0);
+
+        return {
+          station: stationObj,
+          distanceFromSourceKm: Math.round(stop.distance || 0),
+          scheduledArrival: isoToHHMM(stop.scheduledArrival) || sched?.arrival,
+          scheduledDeparture: isoToHHMM(stop.scheduledDeparture) || sched?.departure,
+          actualArrival: isoToHHMM(stop.actualArrival),
+          actualDeparture: isoToHHMM(stop.actualDeparture),
+          expectedArrival: status === 'UPCOMING' ? isoToHHMM(stop.actualArrival) : undefined,
+          expectedDeparture: status === 'UPCOMING' ? isoToHHMM(stop.actualDeparture) : undefined,
+          delayMinutes: delay,
+          platform: stop.platform,
+          status,
+          isHalt: true,
+        };
+      });
+
+      return stations as unknown as T;
+    } else if (liveSched?.route) {
       const halts = liveSched.route.filter((s: any) => s.isHalt && s.station);
       const stations: JourneyStation[] = halts.map((s: any, idx: number) => ({
         station: {
@@ -593,6 +748,17 @@ export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
 
   // 7. Delays: trains/:trainNumber/delays
   if (parts[0] === 'trains' && sub === 'delays') {
+    if (liveData?.route) {
+      const halts = (liveData.route as any[]).filter((r: any) => r.isHalt);
+      return halts.map((s: any) => ({
+        stationCode: s.stationCode || '',
+        stationName: s.stationName || '',
+        scheduledTime: isoToHHMM(s.scheduledArrival) || isoToHHMM(s.scheduledDeparture) || '00:00',
+        actualTime: isoToHHMM(s.actualArrival) || isoToHHMM(s.actualDeparture) || isoToHHMM(s.scheduledArrival) || '00:00',
+        delayMinutes: Math.round(s.delayArrival ?? s.delayDeparture ?? liveData.delayMinutes ?? 0),
+        distanceKm: Math.round(s.distance || 0),
+      })) as unknown as T;
+    }
     return dbData.stations.map((s) => ({
       stationCode: s.station.code,
       stationName: s.station.name,

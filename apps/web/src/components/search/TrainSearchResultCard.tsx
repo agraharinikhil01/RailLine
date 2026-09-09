@@ -37,7 +37,11 @@ export const TrainSearchResultCard: React.FC<TrainSearchResultCardProps> = ({ tr
                 variant={train.status === 'ON TIME' ? 'ontime' : train.status === 'DELAYED' ? 'delayed' : 'neutral'}
                 dot
               >
-                {train.status}
+                {train.status === 'DELAYED' && train.currentDelayMinutes && train.currentDelayMinutes > 0
+                  ? train.currentDelayMinutes >= 60
+                    ? `${Math.floor(train.currentDelayMinutes / 60)}h ${train.currentDelayMinutes % 60}m DELAYED`
+                    : `${train.currentDelayMinutes}m DELAYED`
+                  : train.status}
               </Badge>
             )}
           </div>
