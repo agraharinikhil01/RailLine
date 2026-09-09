@@ -1,4 +1,4 @@
-// Vercel Serverless Function entry point for RailGaadi Fastify API
+// Vercel Serverless Function entry point for RailLine Fastify API
 process.env.IS_SERVERLESS = 'true';
 const { buildApp } = require('../apps/api/dist/index.js');
 

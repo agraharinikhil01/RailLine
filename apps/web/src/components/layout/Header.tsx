@@ -41,7 +41,7 @@ export const Header: React.FC = () => {
           </div>
           <div className="flex items-center gap-2">
             <span className="font-extrabold text-xl text-slate-900 tracking-tight">
-              RailGaadi
+              RailLine
             </span>
             <span className="text-[10px] uppercase font-mono font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200/80 flex items-center gap-1.5 shadow-2xs">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />

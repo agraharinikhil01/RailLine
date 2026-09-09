@@ -1,4 +1,4 @@
-// Vercel Serverless Function Catch-All for RailGaadi API
+// Vercel Serverless Function Catch-All for RailLine API
 process.env.IS_SERVERLESS = 'true';
 const { buildApp } = require('../apps/api/dist/index.js');
 

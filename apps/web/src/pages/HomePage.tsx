@@ -622,7 +622,7 @@ export const HomePage: React.FC = () => {
       <footer className="border-t border-slate-200/80 bg-white py-6 mt-8 w-full">
         <div className="w-full px-6 sm:px-10 lg:px-16 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-slate-700">RailGaadi</span>
+            <span className="font-bold text-slate-700">RailLine</span>
             <span>•</span>
             <span>Next-Gen Railway Journey Intelligence</span>
           </div>
