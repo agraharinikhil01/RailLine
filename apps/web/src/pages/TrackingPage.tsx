@@ -299,10 +299,23 @@ export const TrackingPage: React.FC = () => {
                 <span className="text-[10px] sm:text-[11px] font-bold tracking-wider text-slate-400 uppercase block">
                   LIVE TELEMETRY SPEED
                 </span>
-                <span className="text-xl sm:text-2xl font-extrabold text-slate-900 block font-mono">
-                  {status.location?.speedKmph ?? 0}{' '}
-                  <span className="text-sm sm:text-base font-semibold text-slate-500">km/h</span>
-                </span>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-xl sm:text-2xl font-extrabold text-slate-900 block font-mono">
+                    {status.location?.speedKmph ?? 0}{' '}
+                    <span className="text-sm sm:text-base font-semibold text-slate-500">km/h</span>
+                  </span>
+                  {(status.location?.speedKmph === 0 || !status.location?.speedKmph) ? (
+                    <span className="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200/80 px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                      At Station / Stopped
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                      Cruising
+                    </span>
+                  )}
+                </div>
                 <span className="text-xs text-slate-500 font-medium block mt-0.5">
                   Status:{' '}
                   <span className={status.delayMinutes > 5 ? 'font-bold text-amber-600' : 'font-bold text-emerald-600'}>

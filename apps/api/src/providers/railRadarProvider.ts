@@ -323,7 +323,17 @@ export class RailRadarProvider implements TrainProvider {
       let lat = d.train.source.lat;
       let lng = d.train.source.lng;
       let bearing = 0;
-      let speedKmph = 85;
+
+      const locSpeed = (currentLoc as any)?.speed;
+      const isStopped =
+        currentLoc?.status === 'at-station' ||
+        d.status === 'at-station' ||
+        d.status === 'completed' ||
+        d.status === 'arrived' ||
+        locSpeed === 0 ||
+        Boolean(currentLoc?.status === 'at-station' && currentLoc?.isHalt);
+
+      let speedKmph = 0;
 
       if (currentLoc?.sequence) {
         const curStop = schedBySeq.get(currentLoc.sequence);
@@ -337,7 +347,15 @@ export class RailRadarProvider implements TrainProvider {
           const dLat = nextSeqStop.station.lat - curStop.station.lat;
           const dLng = nextSeqStop.station.lng - curStop.station.lng;
           bearing = Math.round((Math.atan2(dLng, dLat) * 180) / Math.PI + 360) % 360;
-          speedKmph = curStop.speedToNextStationKmph ? Math.round(curStop.speedToNextStationKmph) : 85;
+
+          if (!isStopped) {
+            speedKmph =
+              typeof locSpeed === 'number' && locSpeed > 0
+                ? Math.round(locSpeed)
+                : curStop.speedToNextStationKmph
+                ? Math.round(curStop.speedToNextStationKmph)
+                : 70;
+          }
         } else if (curStop?.station) {
           lat = curStop.station.lat;
           lng = curStop.station.lng;

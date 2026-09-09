@@ -473,7 +473,26 @@ export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
       // Find current stop coords from schedule sequence
       let lat = currentLoc?.lat || 28.6429;
       let lng = currentLoc?.lng || 77.2195;
-      let speedKmph = currentLoc?.speed || 83;
+      // Determine if train is stationary / stopped at station / completed
+      const isStopped =
+        currentLoc?.status === 'at-station' ||
+        d.status === 'at-station' ||
+        d.status === 'completed' ||
+        d.status === 'arrived' ||
+        currentLoc?.speed === 0 ||
+        Boolean(currentLoc?.status === 'at-station' && currentLoc?.isHalt);
+
+      let speedKmph = 0;
+      if (!isStopped) {
+        if (typeof currentLoc?.speed === 'number' && currentLoc.speed > 0) {
+          speedKmph = Math.round(currentLoc.speed);
+        } else if (currentLoc?.sequence && schedBySeq.size > 0) {
+          const curStop = schedBySeq.get(currentLoc.sequence);
+          speedKmph = curStop?.speedToNextStationKmph ? Math.round(curStop.speedToNextStationKmph) : 68;
+        } else {
+          speedKmph = 65;
+        }
+      }
       let bearing = 0;
 
       if (currentLoc?.sequence && schedBySeq.size > 0) {

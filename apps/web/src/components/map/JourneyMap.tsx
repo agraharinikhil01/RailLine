@@ -434,19 +434,19 @@ export const JourneyMap: React.FC<JourneyMapProps> = ({
         trainMarkerElRef.current.innerHTML = `
           <div class="relative flex flex-col items-center justify-center -translate-y-4 pointer-events-auto">
             <!-- Floating Live Speed Badge -->
-            <div class="mb-1 px-2.5 py-0.5 rounded-full bg-slate-950/95 text-sky-300 font-mono text-[10px] font-bold border border-sky-400/80 shadow-lg shadow-sky-950 flex items-center gap-1 backdrop-blur-md whitespace-nowrap">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span>${speed} km/h</span>
+            <div class="mb-1 px-2.5 py-0.5 rounded-full ${speed > 0 ? 'bg-slate-950/95 text-sky-300 border-sky-400/80 shadow-sky-950' : 'bg-slate-950/95 text-amber-300 border-amber-500/80 shadow-amber-950'} font-mono text-[10px] font-bold border shadow-lg flex items-center gap-1.5 backdrop-blur-md whitespace-nowrap">
+              <span class="w-1.5 h-1.5 rounded-full ${speed > 0 ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}"></span>
+              <span>${speed > 0 ? `${speed} km/h` : '0 km/h • Stopped'}</span>
             </div>
 
             <!-- Train Locomotive & Radar Wave (Rotates with track bearing) -->
             <div class="relative flex items-center justify-center" style="transform: rotate(${bearing}deg); transform-origin: center center;">
-              <!-- Conical Headlight Beam -->
-              <div class="absolute -top-7 w-9 h-11 bg-gradient-to-t from-amber-300/40 via-amber-200/20 to-transparent blur-[3px] rounded-t-full pointer-events-none"></div>
+              <!-- Conical Headlight Beam (Active when in motion) -->
+              ${speed > 0 ? '<div class="absolute -top-7 w-9 h-11 bg-gradient-to-t from-amber-300/40 via-amber-200/20 to-transparent blur-[3px] rounded-t-full pointer-events-none"></div>' : ''}
 
               <!-- Radar Wave Ping -->
-              <div class="absolute w-14 h-14 rounded-full bg-sky-400/25 animate-ping pointer-events-none"></div>
-              <div class="absolute w-10 h-10 rounded-full bg-sky-500/35 animate-pulse pointer-events-none"></div>
+              <div class="absolute w-14 h-14 rounded-full ${speed > 0 ? 'bg-sky-400/25 animate-ping' : 'bg-amber-400/15'} pointer-events-none"></div>
+              <div class="absolute w-10 h-10 rounded-full ${speed > 0 ? 'bg-sky-500/35 animate-pulse' : 'bg-amber-500/20'} pointer-events-none"></div>
 
               <!-- High-Detail Locomotive SVG -->
               <div class="w-9 h-11 relative flex items-center justify-center drop-shadow-[0_8px_16px_rgba(0,0,0,0.85)] hover:scale-110 transition-transform">

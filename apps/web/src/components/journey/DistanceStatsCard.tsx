@@ -27,11 +27,16 @@ export const DistanceStatsCard: React.FC<DistanceStatsCardProps> = ({ status }) 
           <Gauge className="w-3.5 h-3.5 text-sky-500" />
           <span>Speed</span>
         </div>
-        <div className="flex items-baseline gap-1">
+        <div className="flex items-baseline gap-1.5">
           <span className="font-mono text-xl font-bold text-slate-900">
             {status.location.speedKmph || 0}
           </span>
           <span className="text-xs text-slate-400 font-mono">km/h</span>
+          {(status.location.speedKmph === 0 || !status.location.speedKmph) && (
+            <span className="ml-auto text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-200/80 px-1.5 py-0.5 rounded-full">
+              Stopped
+            </span>
+          )}
         </div>
       </div>
 
