@@ -10,10 +10,12 @@ import {
   Gauge,
   Sun,
   Mountain,
+  History,
 } from 'lucide-react';
 import { useLiveStatus } from '../hooks/useLiveStatus';
 import { useRouteGeometry } from '../hooks/useRouteGeometry';
 import { useTimeline } from '../hooks/useTimeline';
+import { useTrainDetails } from '../hooks/useTrainDetails';
 import { useElevation } from '../hooks/useElevation';
 import { useDelayHistory } from '../hooks/useDelayHistory';
 import { useRouteWeather } from '../hooks/useRouteWeather';
@@ -22,6 +24,8 @@ import { trainApi } from '../services/trainService';
 import { FavoriteButton } from '../components/journey/FavoriteButton';
 import { JourneyTimeline } from '../components/journey/JourneyTimeline';
 import { JourneyMap } from '../components/map/JourneyMap';
+import { WeeklyScheduleCard } from '../components/schedule/WeeklyScheduleCard';
+import { PastDelayHistoryCard } from '../components/analytics/PastDelayHistoryCard';
 import { ElevationChart } from '../components/analytics/ElevationChart';
 import { DelayChart } from '../components/analytics/DelayChart';
 import { WeatherCard } from '../components/weather/WeatherCard';
@@ -72,14 +76,17 @@ const CircularProgressRing: React.FC<{ percentage: number }> = ({ percentage }) 
 export const TrackingPage: React.FC = () => {
   const { trainNumber = '' } = useParams<{ trainNumber: string }>();
 
-  // Tab State matching screenshot 1
-  const [activeTab, setActiveTab] = useState<'map' | 'weather' | 'elevation'>('map');
+  // Tab State
+  const [activeTab, setActiveTab] = useState<'map' | 'history' | 'weather' | 'elevation'>('map');
   const [selectedStation, setSelectedStation] = useState<JourneyStation | null>(null);
 
   // Share Modal State
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | undefined>();
   const [isGeneratingShare, setIsGeneratingShare] = useState(false);
+
+  // Train Schedule & Details
+  const { train: trainDetails } = useTrainDetails(trainNumber);
 
   // Telemetry & Route Queries
   const {
@@ -98,6 +105,9 @@ export const TrackingPage: React.FC = () => {
   const { delays: delayHistory, isLoading: isDelaysLoading } = useDelayHistory(trainNumber);
   const { routeWeather } = useRouteWeather(trainNumber);
   const { places } = useNearbyPlaces(trainNumber);
+
+  // Combined operating days from details or status
+  const operatingDays = trainDetails?.operatingDays || status?.operatingDays || ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   const handleOpenShare = async () => {
     setIsShareModalOpen(true);
@@ -194,6 +204,32 @@ export const TrackingPage: React.FC = () => {
                 ? `${Math.floor(status.delayMinutes / 60)}h ${status.delayMinutes % 60}m DELAYED`
                 : `${status.delayMinutes}m DELAYED`}
             </span>
+
+            {/* Running Days Mini Badge */}
+            <div className="hidden lg:flex items-center gap-1 pl-2.5 border-l border-slate-200">
+              <span className="text-[10px] text-slate-400 font-medium">Runs:</span>
+              {(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const).map((day) => {
+                const isRunning = operatingDays.some(
+                  (d) => d.toLowerCase().slice(0, 3) === day.toLowerCase().slice(0, 3)
+                );
+                return (
+                  <span
+                    key={day}
+                    title={isRunning ? `Runs on ${day}` : `Does not run on ${day}`}
+                    className={`w-4 h-4 rounded text-[9px] font-mono font-bold flex items-center justify-center transition-colors ${
+                      isRunning
+                        ? 'bg-emerald-100 text-emerald-700 border border-emerald-300'
+                        : 'bg-slate-100 text-slate-300 border border-slate-200 line-through opacity-60'
+                    }`}
+                  >
+                    {day[0]}
+                  </span>
+                );
+              })}
+              <span className="text-[10px] text-slate-500 font-mono ml-0.5">
+                ({operatingDays.length === 7 ? 'Daily' : `${operatingDays.length}d/wk`})
+              </span>
+            </div>
           </div>
 
           <div className="flex items-center gap-3 text-slate-500">
@@ -321,6 +357,19 @@ export const TrackingPage: React.FC = () => {
 
           <button
             type="button"
+            onClick={() => setActiveTab('history')}
+            className={`px-4 py-2 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all shadow-2xs shrink-0 ${
+              activeTab === 'history'
+                ? 'bg-sky-500 text-white shadow-sm'
+                : 'bg-white hover:bg-slate-100 text-slate-600 border border-slate-200/80'
+            }`}
+          >
+            <History className="w-3.5 h-3.5" />
+            <span>Past History & Schedule</span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => setActiveTab('weather')}
             className={`px-4 py-2 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all shadow-2xs shrink-0 ${
               activeTab === 'weather'
@@ -348,24 +397,63 @@ export const TrackingPage: React.FC = () => {
 
         {/* 4. TAB CONTENT */}
         {activeTab === 'map' && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-            <div className="lg:col-span-7 xl:col-span-8 2xl:col-span-8 rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden h-[580px] sm:h-[640px] lg:h-[700px] relative bg-slate-950">
-              <JourneyMap
-                status={status}
-                routeGeoJSON={routeGeoJSON}
-                stations={timeline}
-                selectedStation={selectedStation}
-                onStationSelect={handleStationClick}
-                className="w-full h-full"
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+              <div className="lg:col-span-7 xl:col-span-8 2xl:col-span-8 rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden h-[580px] sm:h-[640px] lg:h-[700px] relative bg-slate-950">
+                <JourneyMap
+                  status={status}
+                  routeGeoJSON={routeGeoJSON}
+                  stations={timeline}
+                  selectedStation={selectedStation}
+                  onStationSelect={handleStationClick}
+                  className="w-full h-full"
+                />
+              </div>
+              <div className="lg:col-span-5 xl:col-span-4 2xl:col-span-4 rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm h-[580px] sm:h-[640px] lg:h-[700px] flex flex-col">
+                <JourneyTimeline
+                  stations={timeline}
+                  onSelectStation={handleStationClick}
+                  className="h-full"
+                />
+              </div>
+            </div>
+
+            {/* Weekly Schedule & Past Delay Record Section */}
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+              <WeeklyScheduleCard
+                operatingDays={operatingDays}
+                trainNumber={status.trainNumber}
+                trainName={status.trainName}
+              />
+              <PastDelayHistoryCard
+                timeline={timeline}
+                delayHistory={delayHistory}
+                trainNumber={status.trainNumber}
+                trainName={status.trainName}
+                operatingDays={operatingDays}
+                currentDelayMinutes={status.delayMinutes}
+                isLoading={isDelaysLoading}
               />
             </div>
-            <div className="lg:col-span-5 xl:col-span-4 2xl:col-span-4 rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm h-[580px] sm:h-[640px] lg:h-[700px] flex flex-col">
-              <JourneyTimeline
-                stations={timeline}
-                onSelectStation={handleStationClick}
-                className="h-full"
-              />
-            </div>
+          </div>
+        )}
+
+        {activeTab === 'history' && (
+          <div className="space-y-6">
+            <WeeklyScheduleCard
+              operatingDays={operatingDays}
+              trainNumber={status.trainNumber}
+              trainName={status.trainName}
+            />
+            <PastDelayHistoryCard
+              timeline={timeline}
+              delayHistory={delayHistory}
+              trainNumber={status.trainNumber}
+              trainName={status.trainName}
+              operatingDays={operatingDays}
+              currentDelayMinutes={status.delayMinutes}
+              isLoading={isDelaysLoading}
+            />
           </div>
         )}
 

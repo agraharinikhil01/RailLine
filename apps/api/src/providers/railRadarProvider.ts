@@ -393,6 +393,7 @@ export class RailRadarProvider implements TrainProvider {
         delayTrend: delay > 15 ? 'INCREASING' : delay > 5 ? 'STABLE' : 'DECREASING',
         lastUpdatedAt: d.lastUpdatedAt || new Date().toISOString(),
         isStale: false,
+        operatingDays: mapRunDays(d.train?.runDays || schedResp.data.train?.runDays || []),
       };
     } catch (err) {
       console.error(`[RailRadar] getLiveStatus failed for ${trainNumber}:`, err);

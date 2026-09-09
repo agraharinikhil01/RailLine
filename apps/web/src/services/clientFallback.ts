@@ -433,7 +433,10 @@ export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
         destination: { code: t.destination?.code || '', name: t.destination?.name || '' },
         totalDistanceKm: Math.round(t.distance || 1000),
         totalDurationMinutes: t.duration || 720,
-        operatingDays: t.runDays || ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        operatingDays: ((t.runDays || ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']) as string[]).map((d: string) => {
+          const MAP: Record<string, string> = { mon: 'Mon', tue: 'Tue', wed: 'Wed', thu: 'Thu', fri: 'Fri', sat: 'Sat', sun: 'Sun' };
+          return MAP[d.toLowerCase()] || d;
+        }),
         route: halts.map((s: any) => ({
           code: s.station?.code || '',
           name: s.station?.name || '',
@@ -544,6 +547,10 @@ export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
         delayTrend: delay > 15 ? 'INCREASING' : delay > 5 ? 'STABLE' : 'DECREASING',
         lastUpdatedAt: d.lastUpdatedAt || new Date().toISOString(),
         isStale: false,
+        operatingDays: ((liveSched.train?.runDays || d.train?.runDays || ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']) as string[]).map((x: string) => {
+          const MAP: Record<string, string> = { mon: 'Mon', tue: 'Tue', wed: 'Wed', thu: 'Thu', fri: 'Fri', sat: 'Sat', sun: 'Sun' };
+          return MAP[x.toLowerCase()] || x;
+        }),
       };
       return liveStatus as unknown as T;
     }
@@ -565,6 +572,7 @@ export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
       delayTrend: 'STABLE',
       lastUpdatedAt: new Date().toISOString(),
       isStale: false,
+      operatingDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
     } as unknown as T;
   }
 

@@ -91,6 +91,7 @@ export interface LiveTrainStatus {
   delayTrend?: DelayTrend;
   lastUpdatedAt: string;
   isStale?: boolean;
+  operatingDays?: string[];
 }
 
 export interface JourneyStation {

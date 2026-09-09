@@ -53,6 +53,36 @@ export const TrainSearchResultCard: React.FC<TrainSearchResultCardProps> = ({ tr
             <span>{train.destination}</span>
             <span className="font-mono text-slate-400">({train.destinationCode})</span>
           </div>
+
+          {/* Running Days Weekly Pills */}
+          {train.runningDays && train.runningDays.length > 0 && (
+            <div className="flex items-center gap-1 mt-2">
+              <span className="text-[10px] text-slate-400 font-medium mr-0.5">Runs:</span>
+              {(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const).map((day) => {
+                const isRunning = train.runningDays?.some(
+                  (d) => d.toLowerCase().slice(0, 3) === day.toLowerCase().slice(0, 3)
+                );
+                return (
+                  <span
+                    key={day}
+                    title={isRunning ? `Runs on ${day}` : `Does not run on ${day}`}
+                    className={`w-4 h-4 rounded text-[9px] font-mono font-bold flex items-center justify-center transition-colors ${
+                      isRunning
+                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-300'
+                        : 'bg-slate-100 text-slate-300 border border-slate-200 line-through opacity-60'
+                    }`}
+                  >
+                    {day[0]}
+                  </span>
+                );
+              })}
+              <span className="text-[10px] text-slate-400 font-mono ml-1">
+                {train.runningDays.length === 7
+                  ? 'Daily'
+                  : `${train.runningDays.length}d/wk`}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
