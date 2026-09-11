@@ -164,7 +164,7 @@ const TRAINS_DATABASE: Record<string, TrainRouteData> = {
   },
 };
 
-const RAILRADAR_KEY = 'rg_ff60afba90bf47d3bcb6c39f7920d3e0';
+const RAILRADAR_KEY = (import.meta as any).env?.VITE_RAILRADAR_KEY || 'rg_ff60afba90bf47d3bcb6c39f7920d3e0';
 
 // In-memory client caches
 const scheduleCache = new Map<string, any>();
