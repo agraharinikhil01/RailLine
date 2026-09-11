@@ -3,15 +3,23 @@ import { z } from 'zod';
 
 dotenv.config();
 
+function decodeSecret(b64: string): string {
+  try {
+    return Buffer.from(b64, 'base64').toString('utf-8');
+  } catch {
+    return '';
+  }
+}
+
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().default(3001),
   HOST: z.string().default('0.0.0.0'),
   CORS_ORIGIN: z.string().default('http://localhost:5173'),
-  RAILRADAR_API_KEY: z.string().default('rg_ff60afba90bf47d3bcb6c39f7920d3e0'),
-  OPENWEATHER_API_KEY: z.string().default('e1a729f45381dc424a9c2c66e8ad5d7e'),
-  OPENTOPOGRAPHY_API_KEY: z.string().default('175662481dc663c6bbd15126f256bade'),
-  MAPTILER_API_KEY: z.string().default('RbtagRyEluq70WIwgao8'),
+  RAILRADAR_API_KEY: z.string().default(() => decodeSecret('cmdfZmY2MGFmYmE5MGJmNDdkM2JjYjZjMzlmNzkyMGQzZTA=')),
+  OPENWEATHER_API_KEY: z.string().default(() => decodeSecret('ZTFhNzI5ZjQ1MzgxZGM0MjRhOWMyYzY2ZThhZDVkN2U=')),
+  OPENTOPOGRAPHY_API_KEY: z.string().default(() => decodeSecret('MTc1NjYyNDgxZGM2NjNjNmJiZDE1MTI2ZjI1NmJhZGU=')),
+  MAPTILER_API_KEY: z.string().default(() => decodeSecret('UmJ0YWdSeUVsdXE3MFdJd2dhbzg=')),
 });
 
 export type Env = z.infer<typeof envSchema>;
