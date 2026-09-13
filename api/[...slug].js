@@ -19,7 +19,10 @@ async function getApp() {
 module.exports = async function handler(req, res) {
   try {
     const app = await getApp();
-    if (req.url && !req.url.startsWith('/api')) {
+    const originalUrl = req.headers['x-matched-path'] || req.headers['x-vercel-original-uri'] || req.url;
+    if (originalUrl && originalUrl.startsWith('/api')) {
+      req.url = originalUrl;
+    } else if (req.url && !req.url.startsWith('/api')) {
       req.url = `/api${req.url}`;
     }
     app.server.emit('request', req, res);

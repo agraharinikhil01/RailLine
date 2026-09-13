@@ -43,12 +43,14 @@ export const PastDelayHistoryCard: React.FC<PastDelayHistoryCardProps> = ({
   isLoading = false,
   className = '',
 }) => {
-  // Helper to format Date to YYYY-MM-DD
+  // Helper to format Date to YYYY-MM-DD in Indian Standard Time (IST)
   const formatDateToISO = (date: Date) => {
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, '0');
-    const d = String(date.getDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Kolkata',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(date);
   };
 
   const yesterday = new Date();
@@ -172,8 +174,9 @@ export const PastDelayHistoryCard: React.FC<PastDelayHistoryCardProps> = ({
   const selectedDateLabel = useMemo(() => {
     if (!selectedDate) return '';
     const [y, m, d] = selectedDate.split('-').map(Number);
-    const dateObj = new Date(y, (m || 1) - 1, d || 1);
+    const dateObj = new Date(Date.UTC(y, (m || 1) - 1, d || 1, 12, 0, 0));
     return dateObj.toLocaleDateString('en-IN', {
+      timeZone: 'Asia/Kolkata',
       weekday: 'long',
       day: 'numeric',
       month: 'short',

@@ -191,3 +191,39 @@ export interface ApiResponse<T> {
   data?: T;
   error?: ApiError;
 }
+
+export interface HistoricalTripStop {
+  sequence?: number;
+  stationCode: string;
+  stationName: string;
+  platform?: string;
+  distanceKm: number;
+  scheduledArrival?: string;
+  scheduledDeparture?: string;
+  actualArrival?: string;
+  actualDeparture?: string;
+  delayArrivalMinutes?: number;
+  delayDepartureMinutes?: number;
+  expectedArrival?: string;
+  expectedDeparture?: string;
+  delayMinutes?: number;
+  isHalt?: boolean;
+  isOrigin?: boolean;
+  isDestination?: boolean;
+  status?: string;
+  speedKmph?: number;
+}
+
+export interface HistoricalTripData {
+  trainNumber: string;
+  trainName?: string;
+  date: string;
+  dayOfWeek: string;
+  destinationDelayMinutes: number;
+  destinationScheduledArrival?: string;
+  destinationActualArrival?: string;
+  status: 'ON TIME' | 'SLIGHT DELAY' | 'DELAYED' | 'NOT SCHEDULED';
+  isRunDay: boolean;
+  stops: HistoricalTripStop[];
+}
+

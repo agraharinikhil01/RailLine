@@ -41,4 +41,12 @@ export const trainRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) 
     const timeline = await liveStatusService.getTimeline(trainNumber);
     return reply.send({ data: timeline });
   });
+
+  // Historical trip records: GET /api/v1/trains/:trainNumber/historical?date=YYYY-MM-DD
+  fastify.get('/:trainNumber/historical', async (request, reply) => {
+    const { trainNumber } = request.params as { trainNumber: string };
+    const { date } = request.query as { date?: string };
+    const history = await trainService.getHistoricalTrip(trainNumber, date);
+    return reply.send({ data: history });
+  });
 };

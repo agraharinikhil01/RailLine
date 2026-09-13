@@ -19,6 +19,10 @@ async function getApp() {
 module.exports = async function handler(req, res) {
   try {
     const app = await getApp();
+    const originalUrl = req.headers['x-matched-path'] || req.headers['x-vercel-original-uri'] || req.url;
+    if (originalUrl && originalUrl.startsWith('/api/')) {
+      req.url = originalUrl;
+    }
     app.server.emit('request', req, res);
   } catch (err) {
     console.error('[Vercel Serverless Error]:', err);

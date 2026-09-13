@@ -139,7 +139,12 @@ function isoToHHMM(iso?: string): string | undefined {
   try {
     const d = new Date(iso);
     if (isNaN(d.getTime())) return undefined;
-    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    return d.toLocaleTimeString('en-GB', {
+      timeZone: 'Asia/Kolkata',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
   } catch {
     return undefined;
   }

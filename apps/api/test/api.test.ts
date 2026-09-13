@@ -142,6 +142,21 @@ describe('RailLine Complete API Integration Tests', () => {
     assert.ok(body.data.length > 0);
   });
 
+  test('GET /api/v1/trains/:trainNumber/historical returns authentic trip record for date', async () => {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/v1/trains/12951/historical?date=2026-09-01',
+    });
+
+    assert.strictEqual(res.statusCode, 200);
+    const body = JSON.parse(res.body);
+    assert.strictEqual(body.data.trainNumber, '12951');
+    assert.strictEqual(body.data.date, '2026-09-01');
+    assert.strictEqual(body.data.isRunDay, true);
+    assert.ok(body.data.stops.length > 0);
+    assert.ok(typeof body.data.destinationDelayMinutes === 'number');
+  });
+
   // --- Phase 2 Travel Companion: Weather & Places ---
 
   test('GET /api/v1/weather returns location weather', async () => {

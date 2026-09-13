@@ -29,7 +29,12 @@ export async function apiClient<T>(endpoint: string, options?: RequestInit): Pro
     if (response.ok && contentType.includes('application/json')) {
       const data = await response.json();
       if (!data.error) {
-        return (data.data !== undefined ? data.data : data) as T;
+        if (data.data !== undefined) {
+          return data.data as T;
+        }
+        if (endpoint === '/health' || endpoint === '/api' || endpoint === '/api/health') {
+          return data as T;
+        }
       }
     }
   } catch {
