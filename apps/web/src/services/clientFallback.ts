@@ -31,9 +31,65 @@ const STATIONS_MAP: Record<string, Station> = {
   TDL: { code: 'TDL', name: 'Tundla Junction', latitude: 27.2069, longitude: 78.2435, state: 'Uttar Pradesh' },
   ETW: { code: 'ETW', name: 'Etawah Junction', latitude: 26.7768, longitude: 79.0232, state: 'Uttar Pradesh' },
   CNB: { code: 'CNB', name: 'Kanpur Central', latitude: 26.4547, longitude: 80.3507, state: 'Uttar Pradesh' },
+  ASH: { code: 'ASH', name: 'Aishbagh Junction', latitude: 26.8373, longitude: 80.9100, state: 'Uttar Pradesh' },
   LJN: { code: 'LJN', name: 'Lucknow Junction', latitude: 26.8322, longitude: 80.9218, state: 'Uttar Pradesh' },
+  LKO: { code: 'LKO', name: 'Lucknow Charbagh', latitude: 26.8317, longitude: 80.9234, state: 'Uttar Pradesh' },
+  BNZ: { code: 'BNZ', name: 'Badshahnagar', latitude: 26.8742, longitude: 80.9856, state: 'Uttar Pradesh' },
+  BBK: { code: 'BBK', name: 'Barabanki Junction', latitude: 26.9248, longitude: 81.1895, state: 'Uttar Pradesh' },
+  GD: { code: 'GD', name: 'Gonda Junction', latitude: 27.1352, longitude: 81.9610, state: 'Uttar Pradesh' },
+  BST: { code: 'BST', name: 'Basti', latitude: 26.7997, longitude: 82.7533, state: 'Uttar Pradesh' },
+  KLD: { code: 'KLD', name: 'Khalilabad', latitude: 26.7788, longitude: 83.0711, state: 'Uttar Pradesh' },
+  GKP: { code: 'GKP', name: 'Gorakhpur Junction', latitude: 26.7588, longitude: 83.3820, state: 'Uttar Pradesh' },
+  DEOS: { code: 'DEOS', name: 'Deoria Sadar', latitude: 26.5024, longitude: 83.7797, state: 'Uttar Pradesh' },
+  SV: { code: 'SV', name: 'Siwan Junction', latitude: 26.2205, longitude: 84.3571, state: 'Bihar' },
+  CPR: { code: 'CPR', name: 'Chhapra Junction', latitude: 25.7796, longitude: 84.7499, state: 'Bihar' },
+  SEE: { code: 'SEE', name: 'Sonpur Junction', latitude: 25.6980, longitude: 85.1950, state: 'Bihar' },
+  HJP: { code: 'HJP', name: 'Hajipur Junction', latitude: 25.6858, longitude: 85.2137, state: 'Bihar' },
+  MFP: { code: 'MFP', name: 'Muzaffarpur Junction', latitude: 26.1209, longitude: 85.3906, state: 'Bihar' },
+  SPJ: { code: 'SPJ', name: 'Samastipur Junction', latitude: 25.8631, longitude: 85.7813, state: 'Bihar' },
+  DSS: { code: 'DSS', name: 'Dalsingh Sarai', latitude: 25.6667, longitude: 85.8333, state: 'Bihar' },
+  BJU: { code: 'BJU', name: 'Barauni Junction', latitude: 25.4746, longitude: 85.9734, state: 'Bihar' },
+  BGS: { code: 'BGS', name: 'Begusarai', latitude: 25.4182, longitude: 86.1311, state: 'Bihar' },
+  KGG: { code: 'KGG', name: 'Khagaria Junction', latitude: 25.5034, longitude: 86.4716, state: 'Bihar' },
+  MNE: { code: 'MNE', name: 'Mansi Junction', latitude: 25.5256, longitude: 86.5878, state: 'Bihar' },
+  SHC: { code: 'SHC', name: 'Saharsa Junction', latitude: 25.8835, longitude: 86.6006, state: 'Bihar' },
+  LLP: { code: 'LLP', name: 'Lalit Gram', latitude: 26.4258, longitude: 87.0375, state: 'Bihar' },
   PRYJ: { code: 'PRYJ', name: 'Prayagraj Junction', latitude: 25.4358, longitude: 81.8463, state: 'Uttar Pradesh' },
+  DDU: { code: 'DDU', name: 'Pt. Deen Dayal Upadhyaya Jn', latitude: 25.2796, longitude: 83.1189, state: 'Uttar Pradesh' },
   BSB: { code: 'BSB', name: 'Varanasi Junction', latitude: 25.3283, longitude: 82.9868, state: 'Uttar Pradesh' },
+  GAYA: { code: 'GAYA', name: 'Gaya Junction', latitude: 24.8073, longitude: 84.9996, state: 'Bihar' },
+  DHN: { code: 'DHN', name: 'Dhanbad Junction', latitude: 23.7925, longitude: 86.4304, state: 'Jharkhand' },
+  ASN: { code: 'ASN', name: 'Asansol Junction', latitude: 23.6871, longitude: 86.9746, state: 'West Bengal' },
+  HWH: { code: 'HWH', name: 'Howrah Junction', latitude: 22.5839, longitude: 88.3426, state: 'West Bengal' },
+  HSR: { code: 'HSR', name: 'Hisar Junction', latitude: 29.1539, longitude: 75.7229, state: 'Haryana' },
+  BTI: { code: 'BTI', name: 'Bathinda Junction', latitude: 30.2110, longitude: 74.9455, state: 'Punjab' },
+  SSA: { code: 'SSA', name: 'Sirsa', latitude: 29.5349, longitude: 75.0294, state: 'Haryana' },
+  BHT: { code: 'BHT', name: 'Bhattu', latitude: 29.3900, longitude: 75.3400, state: 'Haryana' },
+  ADR: { code: 'ADR', name: 'Mandi Adampur', latitude: 29.2700, longitude: 75.4600, state: 'Haryana' },
+  BNW: { code: 'BNW', name: 'Bhiwani Junction', latitude: 28.7930, longitude: 76.1390, state: 'Haryana' },
+  KLNK: { code: 'KLNK', name: 'Kalanaur Kalan', latitude: 28.8300, longitude: 76.3900, state: 'Haryana' },
+  ROK: { code: 'ROK', name: 'Rohtak Junction', latitude: 28.8955, longitude: 76.6066, state: 'Haryana' },
+  BGZ: { code: 'BGZ', name: 'Bahadurgarh', latitude: 28.6925, longitude: 76.9238, state: 'Haryana' },
+  NNO: { code: 'NNO', name: 'Nangloi', latitude: 28.6833, longitude: 77.0667, state: 'Delhi' },
+  SSB: { code: 'SSB', name: 'Shakur Basti', latitude: 28.6833, longitude: 77.1308, state: 'Delhi' },
+  DBG: { code: 'DBG', name: 'Darbhanga Junction', latitude: 26.1542, longitude: 85.8918, state: 'Bihar' },
+  RJPB: { code: 'RJPB', name: 'Rajendra Nagar Terminal', latitude: 25.5975, longitude: 85.1633, state: 'Bihar' },
+  PURI: { code: 'PURI', name: 'Puri', latitude: 19.8135, longitude: 85.8312, state: 'Odisha' },
+  BKN: { code: 'BKN', name: 'Bikaner Junction', latitude: 28.0167, longitude: 73.3119, state: 'Rajasthan' },
+  SDAH: { code: 'SDAH', name: 'Sealdah', latitude: 22.5697, longitude: 88.3713, state: 'West Bengal' },
+  NZM: { code: 'NZM', name: 'Hazrat Nizamuddin', latitude: 28.5889, longitude: 77.2534, state: 'Delhi' },
+  CSMT: { code: 'CSMT', name: 'Mumbai CSMT', latitude: 18.9402, longitude: 72.8356, state: 'Maharashtra' },
+  FZR: { code: 'FZR', name: 'Firozpur Cantt', latitude: 30.9237, longitude: 74.6136, state: 'Punjab' },
+  BBS: { code: 'BBS', name: 'Bhubaneswar', latitude: 20.2644, longitude: 85.8427, state: 'Odisha' },
+  HYB: { code: 'HYB', name: 'Hyderabad Deccan', latitude: 17.3924, longitude: 78.4682, state: 'Telangana' },
+  DNR: { code: 'DNR', name: 'Danapur', latitude: 25.6267, longitude: 85.0441, state: 'Bihar' },
+  SMVB: { code: 'SMVB', name: 'SMVT Bengaluru', latitude: 13.0039, longitude: 77.6534, state: 'Karnataka' },
+  ASR: { code: 'ASR', name: 'Amritsar Junction', latitude: 31.6340, longitude: 74.8723, state: 'Punjab' },
+  DLI: { code: 'DLI', name: 'Old Delhi Junction', latitude: 28.6606, longitude: 77.2285, state: 'Delhi' },
+  AYC: { code: 'AYC', name: 'Ayodhya Cantt', latitude: 26.7756, longitude: 82.1384, state: 'Uttar Pradesh' },
+  GNC: { code: 'GNC', name: 'Gandhinagar Capital', latitude: 23.2354, longitude: 72.6397, state: 'Gujarat' },
+  SVDK: { code: 'SVDK', name: 'SMVD Katra', latitude: 32.9902, longitude: 74.9318, state: 'Jammu and Kashmir' },
+  DBRG: { code: 'DBRG', name: 'Dibrugarh', latitude: 27.4728, longitude: 94.9120, state: 'Assam' },
   AGC: { code: 'AGC', name: 'Agra Cantt', latitude: 27.1593, longitude: 78.0062, state: 'Uttar Pradesh' },
   GWL: { code: 'GWL', name: 'Gwalior Junction', latitude: 26.2163, longitude: 78.1882, state: 'Madhya Pradesh' },
   VGLJ: { code: 'VGLJ', name: 'VGL Jhansi Junction', latitude: 25.4484, longitude: 78.5685, state: 'Uttar Pradesh' },
@@ -162,7 +218,365 @@ const TRAINS_DATABASE: Record<string, TrainRouteData> = {
       [82.9868, 25.3283],
     ],
   },
+  '15566': {
+    train: {
+      id: 'train_15566',
+      trainNumber: '15566',
+      name: 'Vaishali Express',
+      type: 'Superfast Express',
+      source: { code: 'NDLS', name: 'New Delhi' },
+      destination: { code: 'LLP', name: 'Lalit Gram' },
+      totalDistanceKm: 1380,
+      totalDurationMinutes: 1565,
+      operatingDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+      route: [
+        { code: 'NDLS', name: 'New Delhi', scheduledDeparture: '20:40' },
+        { code: 'GZB', name: 'Ghaziabad Junction', scheduledArrival: '21:26', scheduledDeparture: '21:28' },
+        { code: 'ALJN', name: 'Aligarh Junction', scheduledArrival: '22:46', scheduledDeparture: '22:48' },
+        { code: 'TDL', name: 'Tundla Junction', scheduledArrival: '23:45', scheduledDeparture: '23:47' },
+        { code: 'ETW', name: 'Etawah Junction', scheduledArrival: '00:53', scheduledDeparture: '00:55' },
+        { code: 'CNB', name: 'Kanpur Central', scheduledArrival: '02:45', scheduledDeparture: '02:50' },
+        { code: 'ASH', name: 'Aishbagh Junction', scheduledArrival: '04:35', scheduledDeparture: '04:45' },
+        { code: 'BNZ', name: 'Badshahnagar', scheduledArrival: '05:07', scheduledDeparture: '05:10' },
+        { code: 'BBK', name: 'Barabanki Junction', scheduledArrival: '05:46', scheduledDeparture: '05:48' },
+        { code: 'GD', name: 'Gonda Junction', scheduledArrival: '07:10', scheduledDeparture: '07:15' },
+        { code: 'BST', name: 'Basti', scheduledArrival: '08:26', scheduledDeparture: '08:29' },
+        { code: 'KLD', name: 'Khalilabad', scheduledArrival: '08:58', scheduledDeparture: '09:00' },
+        { code: 'GKP', name: 'Gorakhpur Junction', scheduledArrival: '09:50', scheduledDeparture: '10:00' },
+        { code: 'DEOS', name: 'Deoria Sadar', scheduledArrival: '10:58', scheduledDeparture: '11:00' },
+        { code: 'SV', name: 'Siwan Junction', scheduledArrival: '11:55', scheduledDeparture: '12:00' },
+        { code: 'CPR', name: 'Chhapra Junction', scheduledArrival: '13:15', scheduledDeparture: '13:25' },
+        { code: 'SEE', name: 'Sonpur Junction', scheduledArrival: '14:28', scheduledDeparture: '14:30' },
+        { code: 'HJP', name: 'Hajipur Junction', scheduledArrival: '14:40', scheduledDeparture: '14:45' },
+        { code: 'MFP', name: 'Muzaffarpur Junction', scheduledArrival: '15:45', scheduledDeparture: '15:50' },
+        { code: 'SPJ', name: 'Samastipur Junction', scheduledArrival: '16:50', scheduledDeparture: '16:55' },
+        { code: 'DSS', name: 'Dalsingh Sarai', scheduledArrival: '17:16', scheduledDeparture: '17:18' },
+        { code: 'BJU', name: 'Barauni Junction', scheduledArrival: '18:00', scheduledDeparture: '18:10' },
+        { code: 'BGS', name: 'Begusarai', scheduledArrival: '18:31', scheduledDeparture: '18:33' },
+        { code: 'KGG', name: 'Khagaria Junction', scheduledArrival: '19:15', scheduledDeparture: '19:17' },
+        { code: 'MNE', name: 'Mansi Junction', scheduledArrival: '19:33', scheduledDeparture: '19:35' },
+        { code: 'SHC', name: 'Saharsa Junction', scheduledArrival: '20:30', scheduledDeparture: '21:00' },
+        { code: 'LLP', name: 'Lalit Gram', scheduledArrival: '22:45' },
+      ],
+    },
+    stations: [
+      { station: STATIONS_MAP.NDLS, distanceFromSourceKm: 0, scheduledDeparture: '20:40', actualDeparture: '20:45', delayMinutes: 5, platform: '8', status: 'COMPLETED', isHalt: true },
+      { station: STATIONS_MAP.GZB, distanceFromSourceKm: 26, scheduledArrival: '21:26', scheduledDeparture: '21:28', actualArrival: '21:35', actualDeparture: '21:38', delayMinutes: 10, platform: '2', status: 'COMPLETED', isHalt: true },
+      { station: STATIONS_MAP.ALJN, distanceFromSourceKm: 131, scheduledArrival: '22:46', scheduledDeparture: '22:48', actualArrival: '22:58', actualDeparture: '23:01', delayMinutes: 13, platform: '3', status: 'COMPLETED', isHalt: true },
+      { station: STATIONS_MAP.TDL, distanceFromSourceKm: 209, scheduledArrival: '23:45', scheduledDeparture: '23:47', actualArrival: '00:02', actualDeparture: '00:05', delayMinutes: 18, platform: '5', status: 'COMPLETED', isHalt: true },
+      { station: STATIONS_MAP.ETW, distanceFromSourceKm: 301, scheduledArrival: '00:53', scheduledDeparture: '00:55', actualArrival: '01:15', actualDeparture: '01:17', delayMinutes: 22, platform: '3', status: 'COMPLETED', isHalt: true },
+      { station: STATIONS_MAP.CNB, distanceFromSourceKm: 440, scheduledArrival: '02:45', scheduledDeparture: '02:50', actualArrival: '03:10', actualDeparture: '03:18', delayMinutes: 28, platform: '6', status: 'COMPLETED', isHalt: true },
+      { station: STATIONS_MAP.ASH, distanceFromSourceKm: 512, scheduledArrival: '04:35', scheduledDeparture: '04:45', actualArrival: '05:00', actualDeparture: '05:12', delayMinutes: 27, platform: '2', status: 'COMPLETED', isHalt: true },
+      { station: STATIONS_MAP.BNZ, distanceFromSourceKm: 523, scheduledArrival: '05:07', scheduledDeparture: '05:10', actualArrival: '05:32', actualDeparture: '05:35', delayMinutes: 25, platform: '1', status: 'COMPLETED', isHalt: true },
+      { station: STATIONS_MAP.BBK, distanceFromSourceKm: 548, scheduledArrival: '05:46', scheduledDeparture: '05:48', actualArrival: '06:12', actualDeparture: '06:15', delayMinutes: 27, platform: '3', status: 'COMPLETED', isHalt: true },
+      { station: STATIONS_MAP.GD, distanceFromSourceKm: 637, scheduledArrival: '07:10', scheduledDeparture: '07:15', actualArrival: '07:42', actualDeparture: '07:48', delayMinutes: 33, platform: '2', status: 'COMPLETED', isHalt: true },
+      { station: STATIONS_MAP.BST, distanceFromSourceKm: 726, scheduledArrival: '08:26', scheduledDeparture: '08:29', actualArrival: '08:58', actualDeparture: '09:02', delayMinutes: 33, platform: '3', status: 'COMPLETED', isHalt: true },
+      { station: STATIONS_MAP.KLD, distanceFromSourceKm: 755, scheduledArrival: '08:58', scheduledDeparture: '09:00', actualArrival: '09:30', actualDeparture: '09:32', delayMinutes: 32, platform: '2', status: 'COMPLETED', isHalt: true },
+      { station: STATIONS_MAP.GKP, distanceFromSourceKm: 789, scheduledArrival: '09:50', scheduledDeparture: '10:00', actualArrival: '10:20', actualDeparture: '10:32', delayMinutes: 32, platform: '1', status: 'CURRENT', isHalt: true },
+      { station: STATIONS_MAP.DEOS, distanceFromSourceKm: 839, scheduledArrival: '10:58', scheduledDeparture: '11:00', expectedArrival: '11:28', expectedDeparture: '11:30', delayMinutes: 30, platform: '3', status: 'UPCOMING', isHalt: true },
+      { station: STATIONS_MAP.SV, distanceFromSourceKm: 908, scheduledArrival: '11:55', scheduledDeparture: '12:00', expectedArrival: '12:22', expectedDeparture: '12:27', delayMinutes: 27, platform: '1', status: 'UPCOMING', isHalt: true },
+      { station: STATIONS_MAP.CPR, distanceFromSourceKm: 970, scheduledArrival: '13:15', scheduledDeparture: '13:25', expectedArrival: '13:40', expectedDeparture: '13:50', delayMinutes: 25, platform: '2', status: 'UPCOMING', isHalt: true },
+      { station: STATIONS_MAP.SEE, distanceFromSourceKm: 1024, scheduledArrival: '14:28', scheduledDeparture: '14:30', expectedArrival: '14:52', expectedDeparture: '14:54', delayMinutes: 24, platform: '4', status: 'UPCOMING', isHalt: true },
+      { station: STATIONS_MAP.HJP, distanceFromSourceKm: 1029, scheduledArrival: '14:40', scheduledDeparture: '14:45', expectedArrival: '15:02', expectedDeparture: '15:07', delayMinutes: 22, platform: '2', status: 'UPCOMING', isHalt: true },
+      { station: STATIONS_MAP.MFP, distanceFromSourceKm: 1083, scheduledArrival: '15:45', scheduledDeparture: '15:50', expectedArrival: '16:05', expectedDeparture: '16:10', delayMinutes: 20, platform: '1', status: 'UPCOMING', isHalt: true },
+      { station: STATIONS_MAP.SPJ, distanceFromSourceKm: 1135, scheduledArrival: '16:50', scheduledDeparture: '16:55', expectedArrival: '17:08', expectedDeparture: '17:13', delayMinutes: 18, platform: '4', status: 'UPCOMING', isHalt: true },
+      { station: STATIONS_MAP.DSS, distanceFromSourceKm: 1158, scheduledArrival: '17:16', scheduledDeparture: '17:18', expectedArrival: '17:34', expectedDeparture: '17:36', delayMinutes: 18, platform: '1', status: 'UPCOMING', isHalt: true },
+      { station: STATIONS_MAP.BJU, distanceFromSourceKm: 1186, scheduledArrival: '18:00', scheduledDeparture: '18:10', expectedArrival: '18:16', expectedDeparture: '18:26', delayMinutes: 16, platform: '5', status: 'UPCOMING', isHalt: true },
+      { station: STATIONS_MAP.BGS, distanceFromSourceKm: 1201, scheduledArrival: '18:31', scheduledDeparture: '18:33', expectedArrival: '18:46', expectedDeparture: '18:48', delayMinutes: 15, platform: '2', status: 'UPCOMING', isHalt: true },
+      { station: STATIONS_MAP.KGG, distanceFromSourceKm: 1241, scheduledArrival: '19:15', scheduledDeparture: '19:17', expectedArrival: '19:28', expectedDeparture: '19:30', delayMinutes: 13, platform: '2', status: 'UPCOMING', isHalt: true },
+      { station: STATIONS_MAP.MNE, distanceFromSourceKm: 1250, scheduledArrival: '19:33', scheduledDeparture: '19:35', expectedArrival: '19:45', expectedDeparture: '19:47', delayMinutes: 12, platform: '1', status: 'UPCOMING', isHalt: true },
+      { station: STATIONS_MAP.SHC, distanceFromSourceKm: 1292, scheduledArrival: '20:30', scheduledDeparture: '21:00', expectedArrival: '20:40', expectedDeparture: '21:10', delayMinutes: 10, platform: '2', status: 'UPCOMING', isHalt: true },
+      { station: STATIONS_MAP.LLP, distanceFromSourceKm: 1380, scheduledArrival: '22:45', expectedArrival: '22:55', delayMinutes: 10, platform: '1', status: 'UPCOMING', isHalt: true },
+    ],
+    routeCoordinates: [
+      [77.2195, 28.6429],
+      [77.4338, 28.6678],
+      [78.0880, 27.8974],
+      [78.2435, 27.2069],
+      [79.0232, 26.7768],
+      [80.3507, 26.4547],
+      [80.9100, 26.8373],
+      [80.9856, 26.8742],
+      [81.1895, 26.9248],
+      [81.9610, 27.1352],
+      [82.7533, 26.7997],
+      [83.0711, 26.7788],
+      [83.3820, 26.7588],
+      [83.7797, 26.5024],
+      [84.3571, 26.2205],
+      [84.7499, 25.7796],
+      [85.1950, 25.6980],
+      [85.2137, 25.6858],
+      [85.3906, 26.1209],
+      [85.7813, 25.8631],
+      [85.8333, 25.6667],
+      [85.9734, 25.4746],
+      [86.1311, 25.4182],
+      [86.4716, 25.5034],
+      [86.5878, 25.5256],
+      [86.6006, 25.8835],
+      [87.0375, 26.4258],
+    ],
+  },
+  '15565': {
+    train: {
+      id: 'train_15565',
+      trainNumber: '15565',
+      name: 'Vaishali Express',
+      type: 'Superfast Express',
+      source: { code: 'LLP', name: 'Lalit Gram' },
+      destination: { code: 'NDLS', name: 'New Delhi' },
+      totalDistanceKm: 1380,
+      totalDurationMinutes: 1590,
+      operatingDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+      route: [
+        { code: 'LLP', name: 'Lalit Gram', scheduledDeparture: '06:15' },
+        { code: 'SHC', name: 'Saharsa Junction', scheduledArrival: '07:55', scheduledDeparture: '08:25' },
+        { code: 'MNE', name: 'Mansi Junction', scheduledArrival: '09:18', scheduledDeparture: '09:20' },
+        { code: 'KGG', name: 'Khagaria Junction', scheduledArrival: '09:32', scheduledDeparture: '09:34' },
+        { code: 'BGS', name: 'Begusarai', scheduledArrival: '10:10', scheduledDeparture: '10:12' },
+        { code: 'BJU', name: 'Barauni Junction', scheduledArrival: '10:50', scheduledDeparture: '11:00' },
+        { code: 'DSS', name: 'Dalsingh Sarai', scheduledArrival: '11:32', scheduledDeparture: '11:34' },
+        { code: 'SPJ', name: 'Samastipur Junction', scheduledArrival: '12:05', scheduledDeparture: '12:10' },
+        { code: 'MFP', name: 'Muzaffarpur Junction', scheduledArrival: '13:00', scheduledDeparture: '13:05' },
+        { code: 'HJP', name: 'Hajipur Junction', scheduledArrival: '14:05', scheduledDeparture: '14:10' },
+        { code: 'SEE', name: 'Sonpur Junction', scheduledArrival: '14:20', scheduledDeparture: '14:22' },
+        { code: 'CPR', name: 'Chhapra Junction', scheduledArrival: '15:35', scheduledDeparture: '15:45' },
+        { code: 'SV', name: 'Siwan Junction', scheduledArrival: '16:40', scheduledDeparture: '16:45' },
+        { code: 'DEOS', name: 'Deoria Sadar', scheduledArrival: '17:40', scheduledDeparture: '17:42' },
+        { code: 'GKP', name: 'Gorakhpur Junction', scheduledArrival: '19:00', scheduledDeparture: '19:10' },
+        { code: 'KLD', name: 'Khalilabad', scheduledArrival: '19:48', scheduledDeparture: '19:50' },
+        { code: 'BST', name: 'Basti', scheduledArrival: '20:17', scheduledDeparture: '20:20' },
+        { code: 'GD', name: 'Gonda Junction', scheduledArrival: '21:35', scheduledDeparture: '21:40' },
+        { code: 'BBK', name: 'Barabanki Junction', scheduledArrival: '23:18', scheduledDeparture: '23:20' },
+        { code: 'BNZ', name: 'Badshahnagar', scheduledArrival: '00:03', scheduledDeparture: '00:06' },
+        { code: 'ASH', name: 'Aishbagh Junction', scheduledArrival: '00:30', scheduledDeparture: '00:40' },
+        { code: 'CNB', name: 'Kanpur Central', scheduledArrival: '02:25', scheduledDeparture: '02:30' },
+        { code: 'ETW', name: 'Etawah Junction', scheduledArrival: '04:00', scheduledDeparture: '04:02' },
+        { code: 'TDL', name: 'Tundla Junction', scheduledArrival: '05:25', scheduledDeparture: '05:27' },
+        { code: 'ALJN', name: 'Aligarh Junction', scheduledArrival: '06:28', scheduledDeparture: '06:30' },
+        { code: 'GZB', name: 'Ghaziabad Junction', scheduledArrival: '07:48', scheduledDeparture: '07:50' },
+        { code: 'NDLS', name: 'New Delhi', scheduledArrival: '08:45' },
+      ],
+    },
+    stations: [
+      { station: STATIONS_MAP.LLP, distanceFromSourceKm: 0, scheduledDeparture: '06:15', actualDeparture: '06:15', delayMinutes: 0, platform: '1', status: 'COMPLETED', isHalt: true },
+      { station: STATIONS_MAP.SHC, distanceFromSourceKm: 88, scheduledArrival: '07:55', scheduledDeparture: '08:25', actualArrival: '08:00', actualDeparture: '08:30', delayMinutes: 5, platform: '2', status: 'COMPLETED', isHalt: true },
+      { station: STATIONS_MAP.MNE, distanceFromSourceKm: 130, scheduledArrival: '09:18', scheduledDeparture: '09:20', actualArrival: '09:25', actualDeparture: '09:27', delayMinutes: 7, platform: '1', status: 'COMPLETED', isHalt: true },
+      { station: STATIONS_MAP.KGG, distanceFromSourceKm: 139, scheduledArrival: '09:32', scheduledDeparture: '09:34', actualArrival: '09:40', actualDeparture: '09:42', delayMinutes: 8, platform: '2', status: 'COMPLETED', isHalt: true },
+      { station: STATIONS_MAP.BGS, distanceFromSourceKm: 179, scheduledArrival: '10:10', scheduledDeparture: '10:12', actualArrival: '10:20', actualDeparture: '10:22', delayMinutes: 10, platform: '2', status: 'COMPLETED', isHalt: true },
+      { station: STATIONS_MAP.BJU, distanceFromSourceKm: 194, scheduledArrival: '10:50', scheduledDeparture: '11:00', actualArrival: '11:05', actualDeparture: '11:15', delayMinutes: 15, platform: '5', status: 'COMPLETED', isHalt: true },
+      { station: STATIONS_MAP.DSS, distanceFromSourceKm: 222, scheduledArrival: '11:32', scheduledDeparture: '11:34', actualArrival: '11:46', actualDeparture: '11:48', delayMinutes: 14, platform: '1', status: 'COMPLETED', isHalt: true },
+      { station: STATIONS_MAP.SPJ, distanceFromSourceKm: 245, scheduledArrival: '12:05', scheduledDeparture: '12:10', actualArrival: '12:20', actualDeparture: '12:25', delayMinutes: 15, platform: '4', status: 'COMPLETED', isHalt: true },
+      { station: STATIONS_MAP.MFP, distanceFromSourceKm: 297, scheduledArrival: '13:00', scheduledDeparture: '13:05', actualArrival: '13:16', actualDeparture: '13:21', delayMinutes: 16, platform: '1', status: 'COMPLETED', isHalt: true },
+      { station: STATIONS_MAP.HJP, distanceFromSourceKm: 351, scheduledArrival: '14:05', scheduledDeparture: '14:10', actualArrival: '14:22', actualDeparture: '14:27', delayMinutes: 17, platform: '2', status: 'COMPLETED', isHalt: true },
+      { station: STATIONS_MAP.SEE, distanceFromSourceKm: 356, scheduledArrival: '14:20', scheduledDeparture: '14:22', actualArrival: '14:38', actualDeparture: '14:40', delayMinutes: 18, platform: '4', status: 'CURRENT', isHalt: true },
+      { station: STATIONS_MAP.CPR, distanceFromSourceKm: 410, scheduledArrival: '15:35', scheduledDeparture: '15:45', expectedArrival: '15:52', expectedDeparture: '16:02', delayMinutes: 17, platform: '2', status: 'UPCOMING', isHalt: true },
+      { station: STATIONS_MAP.SV, distanceFromSourceKm: 472, scheduledArrival: '16:40', scheduledDeparture: '16:45', expectedArrival: '16:55', expectedDeparture: '17:00', delayMinutes: 15, platform: '1', status: 'UPCOMING', isHalt: true },
+      { station: STATIONS_MAP.DEOS, distanceFromSourceKm: 541, scheduledArrival: '17:40', scheduledDeparture: '17:42', expectedArrival: '17:54', expectedDeparture: '17:56', delayMinutes: 14, platform: '3', status: 'UPCOMING', isHalt: true },
+      { station: STATIONS_MAP.GKP, distanceFromSourceKm: 591, scheduledArrival: '19:00', scheduledDeparture: '19:10', expectedArrival: '19:15', expectedDeparture: '19:25', delayMinutes: 15, platform: '1', status: 'UPCOMING', isHalt: true },
+      { station: STATIONS_MAP.KLD, distanceFromSourceKm: 625, scheduledArrival: '19:48', scheduledDeparture: '19:50', expectedArrival: '20:02', expectedDeparture: '20:04', delayMinutes: 14, platform: '2', status: 'UPCOMING', isHalt: true },
+      { station: STATIONS_MAP.BST, distanceFromSourceKm: 654, scheduledArrival: '20:17', scheduledDeparture: '20:20', expectedArrival: '20:30', expectedDeparture: '20:33', delayMinutes: 13, platform: '3', status: 'UPCOMING', isHalt: true },
+      { station: STATIONS_MAP.GD, distanceFromSourceKm: 743, scheduledArrival: '21:35', scheduledDeparture: '21:40', expectedArrival: '21:46', expectedDeparture: '21:51', delayMinutes: 11, platform: '2', status: 'UPCOMING', isHalt: true },
+      { station: STATIONS_MAP.BBK, distanceFromSourceKm: 832, scheduledArrival: '23:18', scheduledDeparture: '23:20', expectedArrival: '23:28', expectedDeparture: '23:30', delayMinutes: 10, platform: '3', status: 'UPCOMING', isHalt: true },
+      { station: STATIONS_MAP.BNZ, distanceFromSourceKm: 857, scheduledArrival: '00:03', scheduledDeparture: '00:06', expectedArrival: '00:12', expectedDeparture: '00:15', delayMinutes: 9, platform: '1', status: 'UPCOMING', isHalt: true },
+      { station: STATIONS_MAP.ASH, distanceFromSourceKm: 868, scheduledArrival: '00:30', scheduledDeparture: '00:40', expectedArrival: '00:38', expectedDeparture: '00:48', delayMinutes: 8, platform: '2', status: 'UPCOMING', isHalt: true },
+      { station: STATIONS_MAP.CNB, distanceFromSourceKm: 940, scheduledArrival: '02:25', scheduledDeparture: '02:30', expectedArrival: '02:32', expectedDeparture: '02:37', delayMinutes: 7, platform: '6', status: 'UPCOMING', isHalt: true },
+      { station: STATIONS_MAP.ETW, distanceFromSourceKm: 1079, scheduledArrival: '04:00', scheduledDeparture: '04:02', expectedArrival: '04:06', expectedDeparture: '04:08', delayMinutes: 6, platform: '3', status: 'UPCOMING', isHalt: true },
+      { station: STATIONS_MAP.TDL, distanceFromSourceKm: 1171, scheduledArrival: '05:25', scheduledDeparture: '05:27', expectedArrival: '05:30', expectedDeparture: '05:32', delayMinutes: 5, platform: '5', status: 'UPCOMING', isHalt: true },
+      { station: STATIONS_MAP.ALJN, distanceFromSourceKm: 1249, scheduledArrival: '06:28', scheduledDeparture: '06:30', expectedArrival: '06:32', expectedDeparture: '06:34', delayMinutes: 4, platform: '3', status: 'UPCOMING', isHalt: true },
+      { station: STATIONS_MAP.GZB, distanceFromSourceKm: 1354, scheduledArrival: '07:48', scheduledDeparture: '07:50', expectedArrival: '07:51', expectedDeparture: '07:53', delayMinutes: 3, platform: '2', status: 'UPCOMING', isHalt: true },
+      { station: STATIONS_MAP.NDLS, distanceFromSourceKm: 1380, scheduledArrival: '08:45', expectedArrival: '08:48', delayMinutes: 3, platform: '8', status: 'UPCOMING', isHalt: true },
+    ],
+    routeCoordinates: [
+      [87.0375, 26.4258],
+      [86.6006, 25.8835],
+      [86.5878, 25.5256],
+      [86.4716, 25.5034],
+      [86.1311, 25.4182],
+      [85.9734, 25.4746],
+      [85.8333, 25.6667],
+      [85.7813, 25.8631],
+      [85.3906, 26.1209],
+      [85.2137, 25.6858],
+      [85.1950, 25.6980],
+      [84.7499, 25.7796],
+      [84.3571, 26.2205],
+      [83.7797, 26.5024],
+      [83.3820, 26.7588],
+      [83.0711, 26.7788],
+      [82.7533, 26.7997],
+      [81.9610, 27.1352],
+      [81.1895, 26.9248],
+      [80.9856, 26.8742],
+      [80.9100, 26.8373],
+      [80.3507, 26.4547],
+      [79.0232, 26.7768],
+      [78.2435, 27.2069],
+      [78.0880, 27.8974],
+      [77.4338, 28.6678],
+      [77.2195, 28.6429],
+    ],
+  },
+  '12556': {
+    train: {
+      id: 'train_12556',
+      trainNumber: '12556',
+      name: 'Gorakhdham Superfast Express',
+      type: 'Superfast Express',
+      source: { code: 'HSR', name: 'Hisar Junction' },
+      destination: { code: 'GKP', name: 'Gorakhpur Junction' },
+      totalDistanceKm: 960,
+      totalDurationMinutes: 1005,
+      operatingDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+      route: [
+        { code: 'HSR', name: 'Hisar Junction', scheduledDeparture: '17:00' },
+        { code: 'BNW', name: 'Bhiwani Junction', scheduledArrival: '17:40', scheduledDeparture: '17:45' },
+        { code: 'KLNK', name: 'Kalanaur Kalan', scheduledArrival: '18:10', scheduledDeparture: '18:12' },
+        { code: 'ROK', name: 'Rohtak Junction', scheduledArrival: '18:35', scheduledDeparture: '18:37' },
+        { code: 'BGZ', name: 'Bahadurgarh', scheduledArrival: '19:10', scheduledDeparture: '19:12' },
+        { code: 'SSB', name: 'Shakur Basti', scheduledArrival: '19:40', scheduledDeparture: '19:42' },
+        { code: 'NDLS', name: 'New Delhi', scheduledArrival: '20:55', scheduledDeparture: '21:25' },
+        { code: 'CNB', name: 'Kanpur Central', scheduledArrival: '02:55', scheduledDeparture: '03:00' },
+        { code: 'LKO', name: 'Lucknow Charbagh', scheduledArrival: '04:50', scheduledDeparture: '05:00' },
+        { code: 'BBK', name: 'Barabanki Junction', scheduledArrival: '05:43', scheduledDeparture: '05:45' },
+        { code: 'GD', name: 'Gonda Junction', scheduledArrival: '07:05', scheduledDeparture: '07:10' },
+        { code: 'BST', name: 'Basti', scheduledArrival: '08:18', scheduledDeparture: '08:21' },
+        { code: 'KLD', name: 'Khalilabad', scheduledArrival: '08:48', scheduledDeparture: '08:50' },
+        { code: 'GKP', name: 'Gorakhpur Junction', scheduledArrival: '09:45' },
+      ],
+    },
+    stations: [
+      { station: STATIONS_MAP.HSR, distanceFromSourceKm: 0, scheduledDeparture: '17:00', actualDeparture: '17:02', delayMinutes: 2, platform: '1', status: 'COMPLETED', isHalt: true },
+      { station: STATIONS_MAP.BNW, distanceFromSourceKm: 60, scheduledArrival: '17:40', scheduledDeparture: '17:45', actualArrival: '17:48', actualDeparture: '17:53', delayMinutes: 8, platform: '1', status: 'COMPLETED', isHalt: true },
+      { station: STATIONS_MAP.KLNK, distanceFromSourceKm: 89, scheduledArrival: '18:10', scheduledDeparture: '18:12', actualArrival: '18:22', actualDeparture: '18:24', delayMinutes: 12, platform: '2', status: 'COMPLETED', isHalt: true },
+      { station: STATIONS_MAP.ROK, distanceFromSourceKm: 109, scheduledArrival: '18:35', scheduledDeparture: '18:37', actualArrival: '18:50', actualDeparture: '18:54', delayMinutes: 17, platform: '1', status: 'COMPLETED', isHalt: true },
+      { station: STATIONS_MAP.BGZ, distanceFromSourceKm: 149, scheduledArrival: '19:10', scheduledDeparture: '19:12', actualArrival: '19:30', actualDeparture: '19:32', delayMinutes: 20, platform: '2', status: 'COMPLETED', isHalt: true },
+      { station: STATIONS_MAP.SSB, distanceFromSourceKm: 168, scheduledArrival: '19:40', scheduledDeparture: '19:42', actualArrival: '20:05', actualDeparture: '20:07', delayMinutes: 25, platform: '3', status: 'COMPLETED', isHalt: true },
+      { station: STATIONS_MAP.NDLS, distanceFromSourceKm: 179, scheduledArrival: '20:55', scheduledDeparture: '21:25', actualArrival: '21:25', actualDeparture: '21:55', delayMinutes: 30, platform: '6', status: 'COMPLETED', isHalt: true },
+      { station: STATIONS_MAP.CNB, distanceFromSourceKm: 619, scheduledArrival: '02:55', scheduledDeparture: '03:00', actualArrival: '03:32', actualDeparture: '03:38', delayMinutes: 38, platform: '7', status: 'CURRENT', isHalt: true },
+      { station: STATIONS_MAP.LKO, distanceFromSourceKm: 691, scheduledArrival: '04:50', scheduledDeparture: '05:00', expectedArrival: '05:25', expectedDeparture: '05:35', delayMinutes: 35, platform: '4', status: 'UPCOMING', isHalt: true },
+      { station: STATIONS_MAP.BBK, distanceFromSourceKm: 719, scheduledArrival: '05:43', scheduledDeparture: '05:45', expectedArrival: '06:15', expectedDeparture: '06:17', delayMinutes: 32, platform: '3', status: 'UPCOMING', isHalt: true },
+      { station: STATIONS_MAP.GD, distanceFromSourceKm: 808, scheduledArrival: '07:05', scheduledDeparture: '07:10', expectedArrival: '07:35', expectedDeparture: '07:40', delayMinutes: 30, platform: '2', status: 'UPCOMING', isHalt: true },
+      { station: STATIONS_MAP.BST, distanceFromSourceKm: 897, scheduledArrival: '08:18', scheduledDeparture: '08:21', expectedArrival: '08:44', expectedDeparture: '08:47', delayMinutes: 26, platform: '3', status: 'UPCOMING', isHalt: true },
+      { station: STATIONS_MAP.KLD, distanceFromSourceKm: 926, scheduledArrival: '08:48', scheduledDeparture: '08:50', expectedArrival: '09:12', expectedDeparture: '09:14', delayMinutes: 24, platform: '2', status: 'UPCOMING', isHalt: true },
+      { station: STATIONS_MAP.GKP, distanceFromSourceKm: 960, scheduledArrival: '09:45', expectedArrival: '10:05', delayMinutes: 20, platform: '5', status: 'UPCOMING', isHalt: true },
+    ],
+    routeCoordinates: [
+      [75.7229, 29.1539],
+      [76.1390, 28.7930],
+      [76.3900, 28.8300],
+      [76.6066, 28.8955],
+      [76.9238, 28.6925],
+      [77.1308, 28.6833],
+      [77.2195, 28.6429],
+      [80.3507, 26.4547],
+      [80.9234, 26.8317],
+      [81.1895, 26.9248],
+      [81.9610, 27.1352],
+      [82.7533, 26.7997],
+      [83.0711, 26.7788],
+      [83.3820, 26.7588],
+    ],
+  },
 };
+
+export function getOrCreateTrainRouteData(trainNumber: string): TrainRouteData {
+  if (TRAINS_DATABASE[trainNumber]) {
+    return TRAINS_DATABASE[trainNumber];
+  }
+
+  // Check POPULAR_SEARCH_CATALOG for metadata
+  const catalogItem = POPULAR_SEARCH_CATALOG.find((t) => t.trainNumber === trainNumber);
+  const name = catalogItem?.name || `Train ${trainNumber} Express`;
+  const srcCode = catalogItem?.sourceCode || 'NDLS';
+  const srcName = catalogItem?.source || 'New Delhi';
+  const dstCode = catalogItem?.destinationCode || 'HWH';
+  const dstName = catalogItem?.destination || 'Destination';
+  const days = catalogItem?.runningDays || ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+  const srcStation: Station = STATIONS_MAP[srcCode] || {
+    code: srcCode,
+    name: srcName,
+    latitude: 28.6429,
+    longitude: 77.2195,
+  };
+  const dstStation: Station = STATIONS_MAP[dstCode] || {
+    code: dstCode,
+    name: dstName,
+    latitude: 25.5975,
+    longitude: 85.1633,
+  };
+
+  // Build a route corridor
+  const stops: Station[] = [srcStation];
+  const candidates = ['CNB', 'PRYJ', 'BSB', 'DDU', 'GAYA'].filter(
+    (c) => c !== srcCode && c !== dstCode && STATIONS_MAP[c]
+  );
+  candidates.forEach((c) => {
+    if (STATIONS_MAP[c]) stops.push(STATIONS_MAP[c]);
+  });
+  stops.push(dstStation);
+
+  const numStops = stops.length;
+  const totalDist = 800 + ((parseInt(trainNumber, 10) || 500) % 700);
+
+  const stations: JourneyStation[] = stops.map((st, i) => {
+    const frac = i / (numStops - 1);
+    const dist = Math.round(totalDist * frac);
+    const status: 'COMPLETED' | 'CURRENT' | 'UPCOMING' =
+      i < 2 ? 'COMPLETED' : i === 2 ? 'CURRENT' : 'UPCOMING';
+    const depHour = 6 + Math.floor(frac * 14);
+    const depMin = (i * 23) % 60;
+    const timeStr = `${String(depHour % 24).padStart(2, '0')}:${String(depMin).padStart(2, '0')}`;
+
+    return {
+      station: st,
+      distanceFromSourceKm: dist,
+      scheduledArrival: i === 0 ? undefined : timeStr,
+      scheduledDeparture: i === numStops - 1 ? undefined : timeStr,
+      actualArrival: i <= 2 ? timeStr : undefined,
+      actualDeparture: i < 2 ? timeStr : undefined,
+      expectedArrival: i > 2 ? timeStr : undefined,
+      expectedDeparture: i > 2 ? timeStr : undefined,
+      delayMinutes: (parseInt(trainNumber, 10) || 10) % 25,
+      platform: String(((i + 2) % 6) + 1),
+      status,
+      isHalt: true,
+    };
+  });
+
+  const routeCoordinates: [number, number][] = stops.map((st) => [
+    st.longitude,
+    st.latitude,
+  ]);
+
+  const synthesized: TrainRouteData = {
+    train: {
+      id: `train_${trainNumber}`,
+      trainNumber,
+      name,
+      type: 'Superfast Express',
+      source: { code: srcCode, name: srcName },
+      destination: { code: dstCode, name: dstName },
+      totalDistanceKm: totalDist,
+      totalDurationMinutes: Math.round(totalDist * 1.2),
+      operatingDays: days,
+      route: stations.map((s) => ({
+        code: s.station.code,
+        name: s.station.name,
+        scheduledArrival: s.scheduledArrival,
+        scheduledDeparture: s.scheduledDeparture,
+        platform: s.platform,
+      })),
+    },
+    stations,
+    routeCoordinates,
+  };
+
+  TRAINS_DATABASE[trainNumber] = synthesized;
+  return synthesized;
+}
 
 function getRailRadarKey(): string {
   const envKey = (import.meta as any).env?.VITE_RAILRADAR_KEY;
@@ -438,7 +852,7 @@ export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
     getOrFetchSchedule(trainNumber),
     getOrFetchLive(trainNumber),
   ]);
-  const dbData = TRAINS_DATABASE[trainNumber] || TRAINS_DATABASE['12951'];
+  const dbData = getOrCreateTrainRouteData(trainNumber);
 
   // 1c. Historical / Date-specific Trip: trains/:trainNumber/historical?date=YYYY-MM-DD
   if (parts[0] === 'trains' && sub === 'historical') {
@@ -751,23 +1165,49 @@ export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
     }
 
     // Database fallback
+    const stations = dbData.stations;
+    const currentIdx = Math.max(0, Math.min(stations.length - 2, Math.floor(stations.length * 0.45)));
+    const currentStation = stations[currentIdx] || stations[0];
+    const nextStation = stations[currentIdx + 1] || currentStation;
+    const totalDist = dbData.train.totalDistanceKm || 1000;
+    const covered = currentStation.distanceFromSourceKm || Math.round(totalDist * 0.45);
+    const remaining = Math.max(0, totalDist - covered);
+
     return {
       trainNumber: dbData.train.trainNumber,
       trainName: dbData.train.name,
-      status: 'ON TIME' as const,
-      delayMinutes: 18,
-      currentStation: { code: 'RTM', name: 'Ratlam Junction (Passed)' },
-      nextStation: { code: 'RTM', name: 'Ratlam Junction', platform: '5', scheduledArrival: '00:25' },
-      location: { lat: 23.3441, lng: 75.0371, bearing: 38, speedKmph: 85, isInterpolated: true },
-      progressPercentage: 47,
-      distanceCoveredKm: 653,
-      distanceRemainingKm: 733,
-      etaNextStation: '00:43',
-      etaDestination: '08:45',
+      status: (currentStation.delayMinutes ?? 0) > 10 ? 'DELAYED' : 'ON TIME',
+      delayMinutes: currentStation.delayMinutes ?? 12,
+      currentStation: {
+        code: currentStation.station.code,
+        name: `${currentStation.station.name} (Passed)`,
+        platform: currentStation.platform || '1',
+        scheduledArrival: currentStation.scheduledArrival,
+        scheduledDeparture: currentStation.scheduledDeparture,
+      },
+      nextStation: {
+        code: nextStation.station.code,
+        name: nextStation.station.name,
+        platform: nextStation.platform || '1',
+        scheduledArrival: nextStation.scheduledArrival || '—',
+        scheduledDeparture: nextStation.scheduledDeparture,
+      },
+      location: {
+        lat: currentStation.station.latitude,
+        lng: currentStation.station.longitude,
+        bearing: 45,
+        speedKmph: 78,
+        isInterpolated: true,
+      },
+      progressPercentage: Math.min(100, Math.round((covered / totalDist) * 100)),
+      distanceCoveredKm: covered,
+      distanceRemainingKm: remaining,
+      etaNextStation: nextStation.expectedArrival || nextStation.scheduledArrival || '—',
+      etaDestination: stations[stations.length - 1]?.expectedArrival || stations[stations.length - 1]?.scheduledArrival || '—',
       delayTrend: 'STABLE',
       lastUpdatedAt: new Date().toISOString(),
       isStale: false,
-      operatingDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+      operatingDays: dbData.train.operatingDays,
     } as unknown as T;
   }
 
@@ -934,18 +1374,24 @@ export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
 
   // 6. Elevation: trains/:trainNumber/elevation
   if (parts[0] === 'trains' && sub === 'elevation') {
+    const profile = dbData.stations.map((st, i) => {
+      const elev = 140 + Math.round(Math.sin(i * 0.6) * 60 + (i * 8));
+      return {
+        distanceKm: st.distanceFromSourceKm,
+        elevationMeters: Math.max(15, elev),
+        stationCode: st.station.code,
+        stationName: st.station.name,
+      };
+    });
+    const currentElev = profile[Math.floor(profile.length * 0.45)]?.elevationMeters || 190;
+    const maxElev = Math.max(...profile.map((p) => p.elevationMeters));
+    const minElev = Math.min(...profile.map((p) => p.elevationMeters));
     return {
-      profile: [
-        { distanceKm: 0, elevationMeters: 14, stationCode: 'MMCT', stationName: 'Origin' },
-        { distanceKm: 300, elevationMeters: 150, stationCode: 'ST', stationName: 'Way 1' },
-        { distanceKm: 650, elevationMeters: 493, stationCode: 'RTM', stationName: 'Central Plateau' },
-        { distanceKm: 1000, elevationMeters: 271, stationCode: 'KOTA', stationName: 'Way 2' },
-        { distanceKm: 1386, elevationMeters: 216, stationCode: 'NDLS', stationName: 'Destination' },
-      ],
-      currentElevationMeters: 493,
-      highestElevationMeters: 512,
-      lowestElevationMeters: 14,
-      elevationGainMeters: 498,
+      profile,
+      currentElevationMeters: currentElev,
+      highestElevationMeters: maxElev,
+      lowestElevationMeters: minElev,
+      elevationGainMeters: maxElev - minElev,
     } as unknown as T;
   }
 
@@ -974,11 +1420,14 @@ export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
 
   // 8. Weather: trains/:trainNumber/weather
   if (parts[0] === 'trains' && sub === 'weather') {
+    const curSt = dbData.stations[Math.floor(dbData.stations.length * 0.45)] || dbData.stations[0];
+    const nextSt = dbData.stations[Math.floor(dbData.stations.length * 0.45) + 1] || curSt;
+    const destSt = dbData.stations[dbData.stations.length - 1] || curSt;
     const routeWeather: RouteWeather = {
       currentStationWeather: {
-        stationName: 'Current Location',
-        latitude: 23.3441,
-        longitude: 75.0371,
+        stationName: curSt.station.name,
+        latitude: curSt.station.latitude,
+        longitude: curSt.station.longitude,
         temperature: 29,
         feelsLike: 31,
         humidity: 62,
@@ -988,9 +1437,9 @@ export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
         updatedAt: new Date().toISOString(),
       },
       nextStationWeather: {
-        stationName: 'Next Station',
-        latitude: 25.2138,
-        longitude: 75.8648,
+        stationName: nextSt.station.name,
+        latitude: nextSt.station.latitude,
+        longitude: nextSt.station.longitude,
         temperature: 28,
         feelsLike: 30,
         humidity: 65,
@@ -1000,9 +1449,9 @@ export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
         updatedAt: new Date().toISOString(),
       },
       destinationWeather: {
-        stationName: 'Destination',
-        latitude: 28.6429,
-        longitude: 77.2195,
+        stationName: destSt.station.name,
+        latitude: destSt.station.latitude,
+        longitude: destSt.station.longitude,
         temperature: 24,
         feelsLike: 25,
         humidity: 50,
@@ -1018,33 +1467,34 @@ export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
 
   // 9. Places: trains/:trainNumber/places
   if (parts[0] === 'trains' && sub === 'places') {
+    const curSt = dbData.stations[Math.floor(dbData.stations.length * 0.45)] || dbData.stations[0];
     const places: GeographicPlace[] = [
       {
         id: 'poi-1',
-        name: 'Heritage Railway Corridor Landmark',
+        name: `${curSt.station.name} Heritage Landmark`,
         type: 'MONUMENT',
-        latitude: 18.9400,
-        longitude: 72.8353,
+        latitude: curSt.station.latitude + 0.02,
+        longitude: curSt.station.longitude + 0.02,
         distanceFromRouteKm: 3.5,
-        description: 'Historic station architectural marvel connecting interstate networks.',
+        description: `Historic landmark and cultural hub near ${curSt.station.name}.`,
       },
       {
         id: 'poi-2',
-        name: 'National Forest & Natural Landmark',
+        name: 'Regional Nature Reserve & Sanctuary',
         type: 'MOUNTAIN',
-        latitude: 19.2215,
-        longitude: 72.9124,
-        distanceFromRouteKm: 4.2,
-        description: 'Protected forest expanse along the railway lines.',
+        latitude: curSt.station.latitude + 0.05,
+        longitude: curSt.station.longitude + 0.04,
+        distanceFromRouteKm: 5.2,
+        description: 'Scenic natural expanse along the railway corridor.',
       },
       {
         id: 'poi-3',
         name: 'River Basin Bridge Crossing',
         type: 'RIVER',
-        latitude: 21.2185,
-        longitude: 72.8360,
+        latitude: curSt.station.latitude - 0.03,
+        longitude: curSt.station.longitude + 0.01,
         distanceFromRouteKm: 1.2,
-        description: 'Major river crossing engineered across tidal waters.',
+        description: 'Major river basin crossing engineered along the line.',
       },
     ];
     return places as unknown as T;
