@@ -19,7 +19,7 @@ import {
 import { TrainProvider } from './trainProvider';
 import { env } from '../config/env';
 
-const BASE_URL = 'https://api.railradar.in/v1';
+const BASE_URL = 'https://railradar.in/api/v1';
 const REQUEST_TIMEOUT_MS = 8000;
 
 // ─── Raw API types ────────────────────────────────────────────────────────────
@@ -118,6 +118,7 @@ async function rrFetch<T>(path: string, apiKey: string): Promise<T> {
   try {
     const res = await fetch(`${BASE_URL}${path}`, {
       headers: {
+        'x-api-key': apiKey,
         Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },

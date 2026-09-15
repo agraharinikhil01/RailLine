@@ -100,6 +100,10 @@ const STATIONS_MAP: Record<string, Station> = {
   MAS: { code: 'MAS', name: 'Mgr Chennai Central', latitude: 13.0827, longitude: 80.2707, state: 'Tamil Nadu' },
   ERS: { code: 'ERS', name: 'Ernakulam Junction', latitude: 9.9678, longitude: 76.2949, state: 'Kerala' },
   TVC: { code: 'TVC', name: 'Thiruvananthapuram Central', latitude: 8.4875, longitude: 76.9525, state: 'Kerala' },
+  TKJ: { code: 'TKJ', name: 'Tilak Bridge', latitude: 28.6272, longitude: 77.2410, state: 'Delhi' },
+  ON: { code: 'ON', name: 'Unnao Junction', latitude: 26.5447, longitude: 80.4897, state: 'Uttar Pradesh' },
+  MUR: { code: 'MUR', name: 'Mankapur Junction', latitude: 27.0371, longitude: 82.2312, state: 'Uttar Pradesh' },
+  BV: { code: 'BV', name: 'Babhnan', latitude: 26.9531, longitude: 82.5204, state: 'Uttar Pradesh' },
 };
 
 const TRAINS_DATABASE: Record<string, TrainRouteData> = {
@@ -851,59 +855,88 @@ const TRAINS_DATABASE: Record<string, TrainRouteData> = {
       trainNumber: '12556',
       name: 'Gorakhdham Superfast Express',
       type: 'Superfast Express',
-      source: { code: 'HSR', name: 'Hisar Junction' },
+      source: { code: 'BTI', name: 'Bathinda Junction' },
       destination: { code: 'GKP', name: 'Gorakhpur Junction' },
-      totalDistanceKm: 960,
-      totalDurationMinutes: 1005,
+      totalDistanceKm: 1118,
+      totalDurationMinutes: 1185,
       operatingDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
       route: [
-        { code: 'HSR', name: 'Hisar Junction', scheduledDeparture: '17:00' },
-        { code: 'BNW', name: 'Bhiwani Junction', scheduledArrival: '17:40', scheduledDeparture: '17:45' },
-        { code: 'KLNK', name: 'Kalanaur Kalan', scheduledArrival: '18:10', scheduledDeparture: '18:12' },
-        { code: 'ROK', name: 'Rohtak Junction', scheduledArrival: '18:35', scheduledDeparture: '18:37' },
-        { code: 'BGZ', name: 'Bahadurgarh', scheduledArrival: '19:10', scheduledDeparture: '19:12' },
-        { code: 'SSB', name: 'Shakur Basti', scheduledArrival: '19:40', scheduledDeparture: '19:42' },
-        { code: 'NDLS', name: 'New Delhi', scheduledArrival: '20:55', scheduledDeparture: '21:25' },
-        { code: 'CNB', name: 'Kanpur Central', scheduledArrival: '02:55', scheduledDeparture: '03:00' },
+        { code: 'BTI', name: 'Bathinda Junction', scheduledDeparture: '14:15' },
+        { code: 'SSA', name: 'Sirsa', scheduledArrival: '15:20', scheduledDeparture: '15:25' },
+        { code: 'BHT', name: 'Bhattu', scheduledArrival: '15:51', scheduledDeparture: '15:53' },
+        { code: 'ADR', name: 'Mandi Adampur', scheduledArrival: '16:07', scheduledDeparture: '16:09' },
+        { code: 'HSR', name: 'Hisar Junction', scheduledArrival: '16:35', scheduledDeparture: '16:40' },
+        { code: 'BNW', name: 'Bhiwani Junction', scheduledArrival: '17:40', scheduledDeparture: '18:05' },
+        { code: 'KLNK', name: 'Kalanaur Kalan', scheduledArrival: '18:31', scheduledDeparture: '18:33' },
+        { code: 'ROK', name: 'Rohtak Junction', scheduledArrival: '19:33', scheduledDeparture: '19:35' },
+        { code: 'BGZ', name: 'Bahadurgarh', scheduledArrival: '20:03', scheduledDeparture: '20:05' },
+        { code: 'NNO', name: 'Nangloi', scheduledArrival: '20:16', scheduledDeparture: '20:18' },
+        { code: 'SSB', name: 'Shakur Basti', scheduledArrival: '20:26', scheduledDeparture: '20:28' },
+        { code: 'NDLS', name: 'New Delhi', scheduledArrival: '21:10', scheduledDeparture: '21:25' },
+        { code: 'CNB', name: 'Kanpur Central', scheduledArrival: '02:55', scheduledDeparture: '03:05' },
+        { code: 'ON', name: 'Unnao Junction', scheduledArrival: '03:36', scheduledDeparture: '03:38' },
         { code: 'LKO', name: 'Lucknow Charbagh', scheduledArrival: '04:50', scheduledDeparture: '05:00' },
-        { code: 'BBK', name: 'Barabanki Junction', scheduledArrival: '05:43', scheduledDeparture: '05:45' },
-        { code: 'GD', name: 'Gonda Junction', scheduledArrival: '07:05', scheduledDeparture: '07:10' },
-        { code: 'BST', name: 'Basti', scheduledArrival: '08:18', scheduledDeparture: '08:21' },
-        { code: 'KLD', name: 'Khalilabad', scheduledArrival: '08:48', scheduledDeparture: '08:50' },
-        { code: 'GKP', name: 'Gorakhpur Junction', scheduledArrival: '09:45' },
+        { code: 'BBK', name: 'Barabanki Junction', scheduledArrival: '05:48', scheduledDeparture: '05:50' },
+        { code: 'GD', name: 'Gonda Junction', scheduledArrival: '07:00', scheduledDeparture: '07:05' },
+        { code: 'MUR', name: 'Mankapur Junction', scheduledArrival: '07:27', scheduledDeparture: '07:29' },
+        { code: 'BV', name: 'Babhnan', scheduledArrival: '07:53', scheduledDeparture: '07:55' },
+        { code: 'BST', name: 'Basti', scheduledArrival: '08:19', scheduledDeparture: '08:22' },
+        { code: 'KLD', name: 'Khalilabad', scheduledArrival: '08:42', scheduledDeparture: '08:44' },
+        { code: 'GKP', name: 'Gorakhpur Junction', scheduledArrival: '10:00' },
       ],
     },
     stations: [
-      { station: STATIONS_MAP['HSR'], distanceFromSourceKm: 0, scheduledDeparture: '17:00', actualDeparture: '17:02', delayMinutes: 2, platform: '1', status: 'COMPLETED', isHalt: true },
-      { station: STATIONS_MAP['BNW'], distanceFromSourceKm: 60, scheduledArrival: '17:40', scheduledDeparture: '17:45', actualArrival: '17:48', actualDeparture: '17:53', delayMinutes: 8, platform: '1', status: 'COMPLETED', isHalt: true },
-      { station: STATIONS_MAP['KLNK'], distanceFromSourceKm: 89, scheduledArrival: '18:10', scheduledDeparture: '18:12', actualArrival: '18:22', actualDeparture: '18:24', delayMinutes: 12, platform: '2', status: 'COMPLETED', isHalt: true },
-      { station: STATIONS_MAP['ROK'], distanceFromSourceKm: 109, scheduledArrival: '18:35', scheduledDeparture: '18:37', actualArrival: '18:50', actualDeparture: '18:54', delayMinutes: 17, platform: '1', status: 'COMPLETED', isHalt: true },
-      { station: STATIONS_MAP['BGZ'], distanceFromSourceKm: 149, scheduledArrival: '19:10', scheduledDeparture: '19:12', actualArrival: '19:30', actualDeparture: '19:32', delayMinutes: 20, platform: '2', status: 'COMPLETED', isHalt: true },
-      { station: STATIONS_MAP['SSB'], distanceFromSourceKm: 168, scheduledArrival: '19:40', scheduledDeparture: '19:42', actualArrival: '20:05', actualDeparture: '20:07', delayMinutes: 25, platform: '3', status: 'COMPLETED', isHalt: true },
-      { station: STATIONS_MAP['NDLS'], distanceFromSourceKm: 179, scheduledArrival: '20:55', scheduledDeparture: '21:25', actualArrival: '21:25', actualDeparture: '21:55', delayMinutes: 30, platform: '6', status: 'COMPLETED', isHalt: true },
-      { station: STATIONS_MAP['CNB'], distanceFromSourceKm: 619, scheduledArrival: '02:55', scheduledDeparture: '03:00', actualArrival: '03:32', actualDeparture: '03:38', delayMinutes: 38, platform: '7', status: 'CURRENT', isHalt: true },
-      { station: STATIONS_MAP['LKO'], distanceFromSourceKm: 691, scheduledArrival: '04:50', scheduledDeparture: '05:00', expectedArrival: '05:25', expectedDeparture: '05:35', delayMinutes: 35, platform: '4', status: 'UPCOMING', isHalt: true },
-      { station: STATIONS_MAP['BBK'], distanceFromSourceKm: 719, scheduledArrival: '05:43', scheduledDeparture: '05:45', expectedArrival: '06:15', expectedDeparture: '06:17', delayMinutes: 32, platform: '3', status: 'UPCOMING', isHalt: true },
-      { station: STATIONS_MAP['GD'], distanceFromSourceKm: 808, scheduledArrival: '07:05', scheduledDeparture: '07:10', expectedArrival: '07:35', expectedDeparture: '07:40', delayMinutes: 30, platform: '2', status: 'UPCOMING', isHalt: true },
-      { station: STATIONS_MAP['BST'], distanceFromSourceKm: 897, scheduledArrival: '08:18', scheduledDeparture: '08:21', expectedArrival: '08:44', expectedDeparture: '08:47', delayMinutes: 26, platform: '3', status: 'UPCOMING', isHalt: true },
-      { station: STATIONS_MAP['KLD'], distanceFromSourceKm: 926, scheduledArrival: '08:48', scheduledDeparture: '08:50', expectedArrival: '09:12', expectedDeparture: '09:14', delayMinutes: 24, platform: '2', status: 'UPCOMING', isHalt: true },
-      { station: STATIONS_MAP['GKP'], distanceFromSourceKm: 960, scheduledArrival: '09:45', expectedArrival: '10:05', delayMinutes: 20, platform: '5', status: 'UPCOMING', isHalt: true },
+      { station: STATIONS_MAP['BTI'], distanceFromSourceKm: 0, scheduledDeparture: '14:15', actualDeparture: '16:39', delayMinutes: 144, platform: '7', status: 'COMPLETED', isHalt: true },
+      { station: STATIONS_MAP['SSA'], distanceFromSourceKm: 76, scheduledArrival: '15:20', scheduledDeparture: '15:25', actualArrival: '17:53', actualDeparture: '17:58', delayMinutes: 153, platform: '2', status: 'COMPLETED', isHalt: true },
+      { station: STATIONS_MAP['BHT'], distanceFromSourceKm: 112, scheduledArrival: '15:51', scheduledDeparture: '15:53', actualArrival: '18:41', actualDeparture: '18:43', delayMinutes: 170, platform: '1', status: 'COMPLETED', isHalt: true },
+      { station: STATIONS_MAP['ADR'], distanceFromSourceKm: 129, scheduledArrival: '16:07', scheduledDeparture: '16:09', actualArrival: '18:43', actualDeparture: '18:45', delayMinutes: 156, platform: '1', status: 'COMPLETED', isHalt: true },
+      { station: STATIONS_MAP['HSR'], distanceFromSourceKm: 158, scheduledArrival: '16:35', scheduledDeparture: '16:40', actualArrival: '18:49', actualDeparture: '18:54', delayMinutes: 134, platform: '1', status: 'COMPLETED', isHalt: true },
+      { station: STATIONS_MAP['BNW'], distanceFromSourceKm: 218, scheduledArrival: '17:40', scheduledDeparture: '18:05', actualArrival: '19:53', actualDeparture: '20:18', delayMinutes: 133, platform: '1', status: 'COMPLETED', isHalt: true },
+      { station: STATIONS_MAP['KLNK'], distanceFromSourceKm: 247, scheduledArrival: '18:31', scheduledDeparture: '18:33', actualArrival: '21:16', actualDeparture: '21:18', delayMinutes: 165, platform: '2', status: 'COMPLETED', isHalt: true },
+      { station: STATIONS_MAP['ROK'], distanceFromSourceKm: 267, scheduledArrival: '19:33', scheduledDeparture: '19:35', actualArrival: '23:03', actualDeparture: '23:05', delayMinutes: 210, platform: '1', status: 'COMPLETED', isHalt: true },
+      { station: STATIONS_MAP['BGZ'], distanceFromSourceKm: 307, scheduledArrival: '20:03', scheduledDeparture: '20:05', actualArrival: '23:59', actualDeparture: '00:01', delayMinutes: 236, platform: '2', status: 'COMPLETED', isHalt: true },
+      { station: STATIONS_MAP['NNO'], distanceFromSourceKm: 319, scheduledArrival: '20:16', scheduledDeparture: '20:18', actualArrival: '00:06', actualDeparture: '00:08', delayMinutes: 230, platform: '2', status: 'COMPLETED', isHalt: true },
+      { station: STATIONS_MAP['SSB'], distanceFromSourceKm: 326, scheduledArrival: '20:26', scheduledDeparture: '20:28', actualArrival: '23:52', actualDeparture: '23:54', delayMinutes: 206, platform: '3', status: 'COMPLETED', isHalt: true },
+      { station: STATIONS_MAP['NDLS'], distanceFromSourceKm: 338, scheduledArrival: '21:10', scheduledDeparture: '21:25', actualArrival: '00:30', actualDeparture: '00:45', delayMinutes: 200, platform: '6', status: 'COMPLETED', isHalt: true },
+      { station: STATIONS_MAP['CNB'], distanceFromSourceKm: 777, scheduledArrival: '02:55', scheduledDeparture: '03:05', expectedArrival: '06:15', expectedDeparture: '06:25', delayMinutes: 200, platform: '7', status: 'UPCOMING', isHalt: true },
+      { station: STATIONS_MAP['ON'], distanceFromSourceKm: 794, scheduledArrival: '03:36', scheduledDeparture: '03:38', expectedArrival: '06:56', expectedDeparture: '06:58', delayMinutes: 200, platform: '2', status: 'UPCOMING', isHalt: true },
+      { station: STATIONS_MAP['LKO'], distanceFromSourceKm: 849, scheduledArrival: '04:50', scheduledDeparture: '05:00', expectedArrival: '08:10', expectedDeparture: '08:20', delayMinutes: 200, platform: '4', status: 'UPCOMING', isHalt: true },
+      { station: STATIONS_MAP['BBK'], distanceFromSourceKm: 877, scheduledArrival: '05:48', scheduledDeparture: '05:50', expectedArrival: '09:08', expectedDeparture: '09:10', delayMinutes: 200, platform: '3', status: 'UPCOMING', isHalt: true },
+      { station: STATIONS_MAP['GD'], distanceFromSourceKm: 966, scheduledArrival: '07:00', scheduledDeparture: '07:05', expectedArrival: '10:20', expectedDeparture: '10:25', delayMinutes: 200, platform: '2', status: 'UPCOMING', isHalt: true },
+      { station: STATIONS_MAP['MUR'], distanceFromSourceKm: 994, scheduledArrival: '07:27', scheduledDeparture: '07:29', expectedArrival: '10:47', expectedDeparture: '10:49', delayMinutes: 200, platform: '1', status: 'UPCOMING', isHalt: true },
+      { station: STATIONS_MAP['BV'], distanceFromSourceKm: 1024, scheduledArrival: '07:53', scheduledDeparture: '07:55', expectedArrival: '11:13', expectedDeparture: '11:15', delayMinutes: 200, platform: '1', status: 'UPCOMING', isHalt: true },
+      { station: STATIONS_MAP['BST'], distanceFromSourceKm: 1055, scheduledArrival: '08:19', scheduledDeparture: '08:22', expectedArrival: '11:39', expectedDeparture: '11:42', delayMinutes: 200, platform: '3', status: 'UPCOMING', isHalt: true },
+      { station: STATIONS_MAP['KLD'], distanceFromSourceKm: 1084, scheduledArrival: '08:42', scheduledDeparture: '08:44', expectedArrival: '12:02', expectedDeparture: '12:04', delayMinutes: 200, platform: '2', status: 'UPCOMING', isHalt: true },
+      { station: STATIONS_MAP['GKP'], distanceFromSourceKm: 1118, scheduledArrival: '10:00', expectedArrival: '13:20', delayMinutes: 200, platform: '5', status: 'UPCOMING', isHalt: true },
     ],
     routeCoordinates: [
-      [75.7229, 29.1539],
-      [76.1390, 28.7930],
-      [76.3900, 28.8300],
-      [76.6066, 28.8955],
-      [76.9238, 28.6925],
-      [77.1308, 28.6833],
-      [77.2195, 28.6429],
-      [80.3507, 26.4547],
-      [80.9234, 26.8317],
-      [81.1895, 26.9248],
-      [81.9610, 27.1352],
-      [82.7533, 26.7997],
-      [83.0711, 26.7788],
-      [83.3820, 26.7588],
+      [74.9455, 30.2110], // BTI
+      [75.0294, 29.5349], // SSA
+      [75.3400, 29.3900], // BHT
+      [75.4600, 29.2700], // ADR
+      [75.7229, 29.1539], // HSR
+      [76.1390, 28.7930], // BNW
+      [76.3900, 28.8300], // KLNK
+      [76.6066, 28.8955], // ROK
+      [76.9238, 28.6925], // BGZ
+      [77.0667, 28.6833], // NNO
+      [77.1308, 28.6833], // SSB
+      [77.2195, 28.6429], // NDLS
+      [77.2410, 28.6272], // TKJ (Tilak Bridge)
+      [77.4338, 28.6678], // GZB (Ghaziabad)
+      [78.0880, 27.8974], // ALJN (Aligarh)
+      [78.2435, 27.2069], // TDL (Tundla)
+      [79.0232, 26.7768], // ETW (Etawah)
+      [80.3507, 26.4547], // CNB
+      [80.4897, 26.5447], // ON
+      [80.9234, 26.8317], // LKO
+      [81.1895, 26.9248], // BBK
+      [81.9610, 27.1352], // GD
+      [82.2312, 27.0371], // MUR
+      [82.5204, 26.9531], // BV
+      [82.7533, 26.7997], // BST
+      [83.0711, 26.7788], // KLD
+      [83.3820, 26.7588], // GKP
     ],
   },
 };
@@ -937,8 +970,8 @@ const POPULAR_SEARCH_CATALOG: SearchCatalogEntry[] = [
   { trainNumber: '12423', name: 'Dibrugarh New Delhi Rajdhani', source: 'Dibrugarh', sourceCode: 'DBRG', destination: 'New Delhi', destinationCode: 'NDLS', departureTime: '20:55', arrivalTime: '10:30', runningDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
   { trainNumber: '12626', name: 'Kerala Express', source: 'New Delhi', sourceCode: 'NDLS', destination: 'Thiruvananthapuram Central', destinationCode: 'TVC', departureTime: '20:10', arrivalTime: '22:10', runningDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
   { trainNumber: '12625', name: 'Kerala Superfast Express', source: 'Thiruvananthapuram Central', sourceCode: 'TVC', destination: 'New Delhi', destinationCode: 'NDLS', departureTime: '12:30', arrivalTime: '13:45', runningDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
-  { trainNumber: '12555', name: 'Gorakhdham Express', source: 'Gorakhpur Junction', sourceCode: 'GKP', destination: 'Hisar', destinationCode: 'HSR', departureTime: '16:35', arrivalTime: '10:00', runningDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
-  { trainNumber: '12556', name: 'Gorakhdham Superfast', source: 'Hisar', sourceCode: 'HSR', destination: 'Gorakhpur Junction', destinationCode: 'GKP', departureTime: '17:00', arrivalTime: '09:45', runningDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
+  { trainNumber: '12555', name: 'Gorakhdham Express', source: 'Gorakhpur Junction', sourceCode: 'GKP', destination: 'Bathinda Junction', destinationCode: 'BTI', departureTime: '16:35', arrivalTime: '12:40', runningDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
+  { trainNumber: '12556', name: 'Gorakhdham Superfast Express', source: 'Bathinda Junction', sourceCode: 'BTI', destination: 'Gorakhpur Junction', destinationCode: 'GKP', departureTime: '14:15', arrivalTime: '10:00', runningDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
   { trainNumber: '12565', name: 'Bihar Sampark Kranti Express', source: 'Darbhanga Junction', sourceCode: 'DBG', destination: 'New Delhi', destinationCode: 'NDLS', departureTime: '08:25', arrivalTime: '05:15', runningDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
   { trainNumber: '12566', name: 'Bihar Sampark Kranti Superfast', source: 'New Delhi', sourceCode: 'NDLS', destination: 'Darbhanga Junction', destinationCode: 'DBG', departureTime: '13:00', arrivalTime: '09:30', runningDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
   { trainNumber: '12393', name: 'Sampoorna Kranti Express', source: 'Rajendra Nagar Terminal', sourceCode: 'RJPB', destination: 'New Delhi', destinationCode: 'NDLS', departureTime: '19:25', arrivalTime: '07:55', runningDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
