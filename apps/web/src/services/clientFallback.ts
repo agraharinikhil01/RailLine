@@ -446,6 +446,10 @@ const TRAINS_DATABASE: Record<string, TrainRouteData> = {
         { code: 'NNO', name: 'Nangloi', scheduledArrival: '20:16', scheduledDeparture: '20:18' },
         { code: 'SSB', name: 'Shakur Basti', scheduledArrival: '20:26', scheduledDeparture: '20:28' },
         { code: 'NDLS', name: 'New Delhi', scheduledArrival: '21:10', scheduledDeparture: '21:25' },
+        { code: 'GZB', name: 'Ghaziabad Junction', scheduledArrival: '21:58', scheduledDeparture: '22:00' },
+        { code: 'ALJN', name: 'Aligarh Junction', scheduledArrival: '23:18', scheduledDeparture: '23:20' },
+        { code: 'TDL', name: 'Tundla Junction', scheduledArrival: '00:28', scheduledDeparture: '00:30' },
+        { code: 'ETW', name: 'Etawah Junction', scheduledArrival: '01:28', scheduledDeparture: '01:30' },
         { code: 'CNB', name: 'Kanpur Central', scheduledArrival: '02:55', scheduledDeparture: '03:05' },
         { code: 'ON', name: 'Unnao Junction', scheduledArrival: '03:36', scheduledDeparture: '03:38' },
         { code: 'LKO', name: 'Lucknow Charbagh', scheduledArrival: '04:50', scheduledDeparture: '05:00' },
@@ -471,6 +475,10 @@ const TRAINS_DATABASE: Record<string, TrainRouteData> = {
       { station: STATIONS_MAP.NNO, distanceFromSourceKm: 319, scheduledArrival: '20:16', scheduledDeparture: '20:18', actualArrival: '00:06', actualDeparture: '00:08', delayMinutes: 230, platform: '2', status: 'COMPLETED', isHalt: true },
       { station: STATIONS_MAP.SSB, distanceFromSourceKm: 326, scheduledArrival: '20:26', scheduledDeparture: '20:28', actualArrival: '23:52', actualDeparture: '23:54', delayMinutes: 206, platform: '3', status: 'COMPLETED', isHalt: true },
       { station: STATIONS_MAP.NDLS, distanceFromSourceKm: 338, scheduledArrival: '21:10', scheduledDeparture: '21:25', actualArrival: '00:30', actualDeparture: '00:45', delayMinutes: 200, platform: '6', status: 'COMPLETED', isHalt: true },
+      { station: STATIONS_MAP.GZB, distanceFromSourceKm: 361, scheduledArrival: '21:58', scheduledDeparture: '22:00', actualArrival: '01:13', actualDeparture: '01:15', delayMinutes: 195, platform: '2', status: 'COMPLETED', isHalt: false },
+      { station: STATIONS_MAP.ALJN, distanceFromSourceKm: 467, scheduledArrival: '23:18', scheduledDeparture: '23:20', expectedArrival: '02:35', expectedDeparture: '02:37', delayMinutes: 195, platform: '3', status: 'UPCOMING', isHalt: false },
+      { station: STATIONS_MAP.TDL, distanceFromSourceKm: 545, scheduledArrival: '00:28', scheduledDeparture: '00:30', expectedArrival: '03:45', expectedDeparture: '03:47', delayMinutes: 195, platform: '5', status: 'UPCOMING', isHalt: false },
+      { station: STATIONS_MAP.ETW, distanceFromSourceKm: 637, scheduledArrival: '01:28', scheduledDeparture: '01:30', expectedArrival: '04:45', expectedDeparture: '04:47', delayMinutes: 195, platform: '2', status: 'UPCOMING', isHalt: false },
       { station: STATIONS_MAP.CNB, distanceFromSourceKm: 777, scheduledArrival: '02:55', scheduledDeparture: '03:05', expectedArrival: '06:15', expectedDeparture: '06:25', delayMinutes: 200, platform: '7', status: 'UPCOMING', isHalt: true },
       { station: STATIONS_MAP.ON, distanceFromSourceKm: 794, scheduledArrival: '03:36', scheduledDeparture: '03:38', expectedArrival: '06:56', expectedDeparture: '06:58', delayMinutes: 200, platform: '2', status: 'UPCOMING', isHalt: true },
       { station: STATIONS_MAP.LKO, distanceFromSourceKm: 849, scheduledArrival: '04:50', scheduledDeparture: '05:00', expectedArrival: '08:10', expectedDeparture: '08:20', delayMinutes: 200, platform: '4', status: 'UPCOMING', isHalt: true },
@@ -1355,7 +1363,6 @@ export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
   if (parts[0] === 'trains' && sub === 'live') {
     if (liveData && liveSched) {
       const d = liveData;
-      const currentLoc = d.currentLocation;
       const delay = Math.round(d.delayMinutes ?? d.delay ?? 0);
       const runStatus: RunningStatus = delay > 5 ? 'DELAYED' : 'ON TIME';
 
@@ -1366,22 +1373,52 @@ export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
         if (stop.station?.code) schedByCode.set(stop.station.code, stop);
       }
 
+      // 1. Resolve authentic current location:
+      let currentLoc = d.currentLocation;
+      let currentSeq = currentLoc?.sequence || 0;
+
+      // Sanity check: if currentLoc is origin or sequence <= 1, find latest departed station in route
+      const departedStops = (d.route || []).filter((r: any) => r.status === 'departed');
+      if (departedStops.length > 0) {
+        const lastDeparted = departedStops[departedStops.length - 1];
+        if (lastDeparted.sequence > currentSeq) {
+          currentLoc = {
+            stationCode: lastDeparted.stationCode || '',
+            stationName: lastDeparted.stationName || '',
+            sequence: lastDeparted.sequence,
+            status: 'departed',
+            isHalt: lastDeparted.isHalt,
+            distanceFromOriginKm: lastDeparted.distance || 0,
+            segmentProgress: 0,
+            delayMinutes: lastDeparted.delayDeparture ?? d.delayMinutes ?? 0,
+            platform: lastDeparted.platform,
+            actualArrival: lastDeparted.actualArrival,
+            actualDeparture: lastDeparted.actualDeparture,
+          };
+          currentSeq = lastDeparted.sequence;
+        }
+      }
+
       const haltRoutes: any[] = (d.route || []).filter((r: any) => r.isHalt);
-      const nextHaltStop = haltRoutes.find((r: any) => r.status === 'upcoming' || r.status === 'at-station') || d.nextHalt;
-      const prevHaltStop = haltRoutes.filter((r: any) => r.status === 'departed').pop() || d.previousHalt;
+      const prevHaltStop =
+        haltRoutes.slice().reverse().find((r: any) => r.sequence <= currentSeq) || haltRoutes[0];
+      const nextHaltStop =
+        haltRoutes.find((r: any) => r.sequence > currentSeq) || haltRoutes[haltRoutes.length - 1];
       const lastHaltStop = haltRoutes[haltRoutes.length - 1];
+
+      // Immediate next station on track (halt or intermediate passing station):
+      const nextImmediateStop =
+        (d.route || []).find((r: any) => r.sequence > currentSeq) || nextHaltStop;
 
       // Find current stop coords from schedule sequence
       let lat = currentLoc?.lat || 28.6429;
       let lng = currentLoc?.lng || 77.2195;
-      // Determine if train is stationary / stopped at station / completed
       const isStopped =
         currentLoc?.status === 'at-station' ||
         d.status === 'at-station' ||
         d.status === 'completed' ||
         d.status === 'arrived' ||
-        currentLoc?.speed === 0 ||
-        Boolean(currentLoc?.status === 'at-station' && currentLoc?.isHalt);
+        currentLoc?.speed === 0;
 
       let speedKmph = 0;
       if (!isStopped) {
@@ -1389,9 +1426,9 @@ export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
           speedKmph = Math.round(currentLoc.speed);
         } else if (currentLoc?.sequence && schedBySeq.size > 0) {
           const curStop = schedBySeq.get(currentLoc.sequence);
-          speedKmph = curStop?.speedToNextStationKmph ? Math.round(curStop.speedToNextStationKmph) : 68;
+          speedKmph = curStop?.speedToNextStationKmph ? Math.round(curStop.speedToNextStationKmph) : 75;
         } else {
-          speedKmph = 65;
+          speedKmph = 75;
         }
       }
       let bearing = 0;
@@ -1413,22 +1450,25 @@ export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
         }
       }
 
-      const isStoppedAtHalt = currentLoc?.status === 'at-station' && currentLoc.isHalt;
-      const currentStationName = currentLoc?.stationName
-        ? isStoppedAtHalt
-          ? currentLoc.stationName
-          : `${currentLoc.stationName} (Passed)`
-        : prevHaltStop?.stationName
-        ? `${prevHaltStop.stationName} (Passed)`
-        : 'In Transit';
-
+      // Clean station names and details:
+      const isAtStation = currentLoc?.status === 'at-station' || d.status === 'at-station' || isStopped;
       const currentStationCode = currentLoc?.stationCode || prevHaltStop?.stationCode || '';
+      const currentStationName = currentLoc?.stationName || prevHaltStop?.stationName || 'In Transit';
       const currentSched = schedByCode.get(currentStationCode);
 
-      const totalDist = Math.round(liveSched.train?.distance || lastHaltStop?.distance || 1000);
-      const covered = Math.round(currentLoc?.distanceFromOriginKm || prevHaltStop?.distance || 0);
+      const nextStationCode = nextImmediateStop?.stationCode || nextHaltStop?.stationCode || '';
+      const nextStationName = nextImmediateStop?.stationName || nextHaltStop?.stationName || 'Next Station';
+      const nextSched = schedByCode.get(nextStationCode);
 
-      const nextArr = isoToHHMM(nextHaltStop?.actualArrival || nextHaltStop?.scheduledArrival);
+      const nextHaltCode = nextHaltStop?.stationCode || '';
+      const nextHaltName = nextHaltStop?.stationName || '';
+      const nextHaltSched = schedByCode.get(nextHaltCode);
+
+      const totalDist = Math.round(liveSched.train?.distance || lastHaltStop?.distance || 1000);
+      const covered = Math.round(currentLoc?.distanceFromOriginKm ?? prevHaltStop?.distance ?? 0);
+
+      const etaNext = isoToHHMM(nextImmediateStop?.actualArrival || nextImmediateStop?.scheduledArrival || nextSched?.arrival);
+      const etaHalt = isoToHHMM(nextHaltStop?.actualArrival || nextHaltStop?.scheduledArrival || nextHaltSched?.arrival);
       const destArr = isoToHHMM(lastHaltStop?.actualArrival || lastHaltStop?.scheduledArrival);
 
       const liveStatus: LiveTrainStatus = {
@@ -1439,18 +1479,37 @@ export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
         currentStation: {
           code: currentStationCode,
           name: currentStationName,
-          platform: isStoppedAtHalt
-            ? haltRoutes.find((r: any) => r.stationCode === currentLoc?.stationCode)?.platform
-            : undefined,
+          platform: currentLoc?.platform || (isAtStation ? haltRoutes.find((r: any) => r.stationCode === currentStationCode)?.platform : undefined),
           scheduledArrival: isoToHHMM(currentSched?.arrival),
           scheduledDeparture: isoToHHMM(currentSched?.departure),
+          actualArrival: isoToHHMM(currentLoc?.actualArrival),
+          actualDeparture: isoToHHMM(currentLoc?.actualDeparture),
+          stationStatus: isAtStation ? 'at-station' : 'departed',
+          distanceKm: currentLoc?.distanceFromOriginKm,
+          isHalt: currentLoc?.isHalt ?? false,
         },
         nextStation: {
-          code: nextHaltStop?.stationCode || d.nextHalt?.stationCode || '',
-          name: nextHaltStop?.stationName || d.nextHalt?.stationName || 'Next Halt',
-          platform: nextHaltStop?.platform || '1',
-          scheduledArrival: isoToHHMM(nextHaltStop?.scheduledArrival) || '—',
-          scheduledDeparture: isoToHHMM(nextHaltStop?.scheduledDeparture),
+          code: nextStationCode,
+          name: nextStationName,
+          platform: nextImmediateStop?.platform,
+          scheduledArrival: isoToHHMM(nextImmediateStop?.scheduledArrival || nextSched?.arrival) || '—',
+          scheduledDeparture: isoToHHMM(nextImmediateStop?.scheduledDeparture || nextSched?.departure),
+          actualArrival: isoToHHMM(nextImmediateStop?.actualArrival),
+          actualDeparture: isoToHHMM(nextImmediateStop?.actualDeparture),
+          stationStatus: 'approaching',
+          distanceKm: nextImmediateStop?.distance,
+          isHalt: nextImmediateStop?.isHalt ?? false,
+        },
+        nextHalt: {
+          code: nextHaltCode,
+          name: nextHaltName,
+          platform: nextHaltStop?.platform,
+          scheduledArrival: isoToHHMM(nextHaltStop?.scheduledArrival || nextHaltSched?.arrival),
+          scheduledDeparture: isoToHHMM(nextHaltStop?.scheduledDeparture || nextHaltSched?.departure),
+          actualArrival: isoToHHMM(nextHaltStop?.actualArrival),
+          actualDeparture: isoToHHMM(nextHaltStop?.actualDeparture),
+          distanceKm: nextHaltStop?.distance,
+          isHalt: true,
         },
         location: {
           lat: Number(lat.toFixed(5)),
@@ -1462,7 +1521,7 @@ export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
         progressPercentage: totalDist > 0 ? Math.min(100, Math.round((covered / totalDist) * 100)) : 50,
         distanceCoveredKm: covered,
         distanceRemainingKm: Math.max(0, totalDist - covered),
-        etaNextStation: nextArr || 'On Time',
+        etaNextStation: etaNext || etaHalt || 'On Time',
         etaDestination: destArr || 'On Time',
         delayTrend: delay > 15 ? 'INCREASING' : delay > 5 ? 'STABLE' : 'DECREASING',
         lastUpdatedAt: d.lastUpdatedAt || new Date().toISOString(),
@@ -1614,10 +1673,57 @@ export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
         if (stop.station?.code) schedByCode.set(stop.station.code, stop);
       }
 
-      const haltRoutes = (liveData.route as any[]).filter((r: any) => r.isHalt);
-      const currentSeq = liveData.currentLocation?.sequence || 0;
+      let currentLoc = liveData.currentLocation;
+      let currentSeq = currentLoc?.sequence || 0;
 
-      const stations: JourneyStation[] = haltRoutes.map((stop: any) => {
+      // Sanity check for furthest departed station
+      const departedStops = (liveData.route as any[]).filter((r: any) => r.status === 'departed');
+      if (departedStops.length > 0) {
+        const lastDeparted = departedStops[departedStops.length - 1];
+        if (lastDeparted.sequence > currentSeq) {
+          currentSeq = lastDeparted.sequence;
+          currentLoc = {
+            stationCode: lastDeparted.stationCode || '',
+            stationName: lastDeparted.stationName || '',
+            sequence: lastDeparted.sequence,
+            status: 'departed',
+            isHalt: lastDeparted.isHalt,
+            distanceFromOriginKm: lastDeparted.distance || 0,
+            delayMinutes: lastDeparted.delayDeparture ?? liveData.delayMinutes ?? 0,
+            platform: lastDeparted.platform,
+            actualArrival: lastDeparted.actualArrival,
+            actualDeparture: lastDeparted.actualDeparture,
+          };
+        }
+      }
+
+      const haltRoutes = (liveData.route as any[]).filter((r: any) => r.isHalt);
+      const isCurrentInHalts = haltRoutes.some((r: any) => r.stationCode === currentLoc?.stationCode);
+
+      // Combine halt stops with current live location if it's an intermediate station
+      const combinedStops: any[] = [...haltRoutes];
+      if (!isCurrentInHalts && currentLoc?.stationCode) {
+        combinedStops.push({
+          sequence: currentLoc.sequence,
+          stationCode: currentLoc.stationCode,
+          stationName: currentLoc.stationName,
+          isHalt: false,
+          status: 'at-station',
+          distance: currentLoc.distanceFromOriginKm,
+          delayArrival: currentLoc.delayMinutes,
+          delayDeparture: currentLoc.delayMinutes,
+          scheduledArrival: currentLoc.scheduledArrival,
+          scheduledDeparture: currentLoc.scheduledDeparture,
+          actualArrival: currentLoc.actualArrival,
+          actualDeparture: currentLoc.actualDeparture,
+          platform: currentLoc.platform,
+        });
+      }
+
+      // Sort by sequence along route
+      combinedStops.sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0));
+
+      const stations: JourneyStation[] = combinedStops.map((stop: any) => {
         const sched = schedByCode.get(stop.stationCode || '');
         const stationObj = {
           code: stop.stationCode || '',
@@ -1627,10 +1733,10 @@ export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
         };
 
         let status: 'COMPLETED' | 'CURRENT' | 'UPCOMING';
-        if (stop.status === 'departed' || (stop.sequence && stop.sequence < currentSeq)) {
-          status = 'COMPLETED';
-        } else if (stop.stationCode === liveData.nextHalt?.stationCode || stop.status === 'at-station') {
+        if (stop.stationCode === currentLoc?.stationCode) {
           status = 'CURRENT';
+        } else if (stop.status === 'departed' || (stop.sequence && stop.sequence < currentSeq)) {
+          status = 'COMPLETED';
         } else {
           status = 'UPCOMING';
         }
@@ -1649,7 +1755,7 @@ export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
           delayMinutes: delay,
           platform: stop.platform,
           status,
-          isHalt: true,
+          isHalt: stop.isHalt ?? true,
         };
       });
 

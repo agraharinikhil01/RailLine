@@ -274,20 +274,45 @@ export const TrackingPage: React.FC = () => {
                 <span className="text-[10px] sm:text-[11px] font-bold tracking-wider text-slate-400 uppercase block">
                   CURRENT LOCATION
                 </span>
-                <span className="text-xl sm:text-2xl font-extrabold text-slate-900 truncate block">
-                  {status.currentStation?.name || 'In Transit'}
-                </span>
-                <span className="text-xs text-slate-500 font-medium block mt-0.5 truncate">
+                <div className="flex items-center gap-2 flex-wrap mt-0.5">
+                  <span className="text-xl sm:text-2xl font-extrabold text-slate-900 truncate block">
+                    {status.currentStation?.name || 'In Transit'}
+                  </span>
+                  {status.currentStation?.code && (
+                    <span className="text-xs font-mono font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
+                      {status.currentStation.code}
+                    </span>
+                  )}
+                  {status.currentStation?.stationStatus === 'at-station' || status.location?.speedKmph === 0 ? (
+                    <span className="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200/80 px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                      At Station {status.currentStation?.platform ? `(PF ${status.currentStation.platform})` : ''}
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                      Departed / En Route
+                    </span>
+                  )}
+                </div>
+                <div className="text-xs text-slate-500 font-medium mt-1 truncate">
                   {status.nextStation?.name ? (
-                    <>
-                      Next Halt: <span className="font-semibold text-slate-700">{status.nextStation.name}</span>
-                      {status.nextStation.platform ? ` (PF ${status.nextStation.platform})` : ''}
+                    <span>
+                      Next Station: <span className="font-semibold text-slate-800">{status.nextStation.name}</span>
+                      {status.nextStation.code ? ` (${status.nextStation.code})` : ''}
+                      {status.nextStation.platform ? ` PF ${status.nextStation.platform}` : ''}
                       {status.etaNextStation ? ` • ETA ${status.etaNextStation}` : ''}
-                    </>
+                    </span>
                   ) : (
                     status.currentStation?.platform ? `Platform ${status.currentStation.platform}` : 'En Route'
                   )}
-                </span>
+                  {status.nextHalt?.name && status.nextHalt.code !== status.nextStation?.code && (
+                    <span className="hidden sm:inline border-l border-slate-200 ml-2 pl-2 text-slate-400">
+                      Next Halt: <span className="text-slate-600 font-semibold">{status.nextHalt.name}</span>
+                      {status.nextHalt.platform ? ` (PF ${status.nextHalt.platform})` : ''}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
 

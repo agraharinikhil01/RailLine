@@ -83,15 +83,21 @@ interface RRLiveResponse {
     isLive: boolean;
     lastUpdatedAt: string;
     delayMinutes: number;
-    currentLocation: {
+    currentLocation?: {
       stationCode: string;
       stationName: string;
       sequence: number;
       status: string;
       isHalt: boolean;
       distanceFromOriginKm: number;
-      segmentProgress: number;
-      delayMinutes: number;
+      segmentProgress?: number;
+      delayMinutes?: number;
+      platform?: string;
+      scheduledArrival?: string;
+      scheduledDeparture?: string;
+      actualArrival?: string;
+      actualDeparture?: string;
+      speed?: number;
     };
     previousHalt: {
       stationCode: string;
@@ -307,25 +313,52 @@ export class RailRadarProvider implements TrainProvider {
         }
       }
 
-      // Live halt stops
+      // 1. Resolve authentic current location:
+      let currentLoc = d.currentLocation;
+      let currentSeq = currentLoc?.sequence || 0;
+
+      // Sanity check: if currentLoc is origin or sequence <= 1, find latest departed station in route
+      const departedStops = d.route.filter((r) => r.status === 'departed');
+      if (departedStops.length > 0) {
+        const lastDeparted = departedStops[departedStops.length - 1];
+        if (lastDeparted.sequence > currentSeq) {
+          currentLoc = {
+            stationCode: lastDeparted.stationCode || '',
+            stationName: lastDeparted.stationName || '',
+            sequence: lastDeparted.sequence,
+            status: 'departed',
+            isHalt: lastDeparted.isHalt,
+            distanceFromOriginKm: lastDeparted.distance || 0,
+            segmentProgress: 0,
+            delayMinutes: lastDeparted.delayDeparture ?? d.delayMinutes ?? 0,
+            platform: lastDeparted.platform,
+            actualArrival: lastDeparted.actualArrival,
+            actualDeparture: lastDeparted.actualDeparture,
+          };
+          currentSeq = lastDeparted.sequence;
+        }
+      }
+
+      // Halts only
       const haltRoutes = d.route.filter((r) => r.isHalt);
-      const nextHaltStop =
-        haltRoutes.find((r) => r.stationCode === d.nextHalt?.stationCode) ||
-        haltRoutes.find((r) => r.status === 'upcoming') ||
-        haltRoutes[haltRoutes.length - 1];
       const prevHaltStop =
-        haltRoutes.find((r) => r.stationCode === d.previousHalt?.stationCode) || haltRoutes[0];
+        haltRoutes.slice().reverse().find((r) => r.sequence <= currentSeq) || haltRoutes[0];
+      const nextHaltStop =
+        haltRoutes.find((r) => r.sequence > currentSeq) || haltRoutes[haltRoutes.length - 1];
       const lastHaltStop = haltRoutes[haltRoutes.length - 1];
 
-      // Exact current location from RailRadar
-      const currentLoc = d.currentLocation;
-      const distanceCovered = currentLoc?.distanceFromOriginKm ?? d.previousHalt?.distance ?? 0;
+      // Immediate next station on track (halt or intermediate passing station):
+      const nextImmediateStop =
+        d.route.find((r) => r.sequence > currentSeq) || nextHaltStop;
+
+      // Distance covered and total
+      const distanceCovered = currentLoc?.distanceFromOriginKm ?? prevHaltStop?.distance ?? 0;
       const totalDistance = Math.round(d.train.distance);
       const distanceRemaining = Math.max(0, totalDistance - distanceCovered);
       const progressPercentage =
         totalDistance > 0 ? Math.min(100, Math.round((distanceCovered / totalDistance) * 100)) : 0;
 
-      // High-precision coordinates along the exact route track:
+      // Coordinates
       let lat = d.train.source.lat;
       let lng = d.train.source.lng;
       let bearing = 0;
@@ -336,11 +369,9 @@ export class RailRadarProvider implements TrainProvider {
         d.status === 'at-station' ||
         d.status === 'completed' ||
         d.status === 'arrived' ||
-        locSpeed === 0 ||
-        Boolean(currentLoc?.status === 'at-station' && currentLoc?.isHalt);
+        locSpeed === 0;
 
       let speedKmph = 0;
-
       if (currentLoc?.sequence) {
         const curStop = schedBySeq.get(currentLoc.sequence);
         const nextSeqStop = schedBySeq.get(currentLoc.sequence + 1) || curStop;
@@ -360,7 +391,7 @@ export class RailRadarProvider implements TrainProvider {
                 ? Math.round(locSpeed)
                 : curStop.speedToNextStationKmph
                 ? Math.round(curStop.speedToNextStationKmph)
-                : 70;
+                : 75;
           }
         } else if (curStop?.station) {
           lat = curStop.station.lat;
@@ -368,20 +399,23 @@ export class RailRadarProvider implements TrainProvider {
         }
       }
 
-      // Real-time current station description
-      const isStoppedAtHalt = currentLoc?.status === 'at-station' && currentLoc.isHalt;
-      const currentStationName = currentLoc?.stationName
-        ? isStoppedAtHalt
-          ? currentLoc.stationName
-          : `${currentLoc.stationName} (Passed)`
-        : prevHaltStop?.stationName || 'In Transit';
-
-      const currentStationPlatform = isStoppedAtHalt
-        ? haltRoutes.find((r) => r.stationCode === currentLoc?.stationCode)?.platform
-        : undefined;
-
+      // Station clean names and details:
+      const isAtStation = currentLoc?.status === 'at-station' || d.status === 'at-station' || isStopped;
       const currentStationCode = currentLoc?.stationCode || prevHaltStop?.stationCode || '';
+      const currentStationName = currentLoc?.stationName || prevHaltStop?.stationName || 'In Transit';
       const currentSchedStop = schedByCode.get(currentStationCode);
+
+      const nextStationCode = nextImmediateStop?.stationCode || nextHaltStop?.stationCode || '';
+      const nextStationName = nextImmediateStop?.stationName || nextHaltStop?.stationName || 'Next Station';
+      const nextSchedStop = schedByCode.get(nextStationCode);
+
+      const nextHaltCode = nextHaltStop?.stationCode || '';
+      const nextHaltName = nextHaltStop?.stationName || '';
+      const nextHaltSchedStop = schedByCode.get(nextHaltCode);
+
+      const etaNext = isoToHHMM(nextImmediateStop?.actualArrival || nextImmediateStop?.scheduledArrival || nextSchedStop?.arrival);
+      const etaHalt = isoToHHMM(nextHaltStop?.actualArrival || nextHaltStop?.scheduledArrival || nextHaltSchedStop?.arrival);
+      const etaDest = isoToHHMM(lastHaltStop?.actualArrival || lastHaltStop?.scheduledArrival);
 
       return {
         trainNumber: d.trainNumber,
@@ -391,16 +425,37 @@ export class RailRadarProvider implements TrainProvider {
         currentStation: {
           code: currentStationCode,
           name: currentStationName,
-          platform: currentStationPlatform,
+          platform: currentLoc?.platform || (isAtStation ? haltRoutes.find((r) => r.stationCode === currentStationCode)?.platform : undefined),
           scheduledArrival: isoToHHMM(currentSchedStop?.arrival),
           scheduledDeparture: isoToHHMM(currentSchedStop?.departure),
+          actualArrival: isoToHHMM(currentLoc?.actualArrival),
+          actualDeparture: isoToHHMM(currentLoc?.actualDeparture),
+          stationStatus: isAtStation ? 'at-station' : 'departed',
+          distanceKm: currentLoc?.distanceFromOriginKm,
+          isHalt: currentLoc?.isHalt ?? false,
         },
         nextStation: {
-          code: nextHaltStop?.stationCode || d.nextHalt?.stationCode || '',
-          name: nextHaltStop?.stationName || d.nextHalt?.stationName || '',
+          code: nextStationCode,
+          name: nextStationName,
+          platform: nextImmediateStop?.platform,
+          scheduledArrival: isoToHHMM(nextImmediateStop?.scheduledArrival || nextSchedStop?.arrival),
+          scheduledDeparture: isoToHHMM(nextImmediateStop?.scheduledDeparture || nextSchedStop?.departure),
+          actualArrival: isoToHHMM(nextImmediateStop?.actualArrival),
+          actualDeparture: isoToHHMM(nextImmediateStop?.actualDeparture),
+          stationStatus: 'approaching',
+          distanceKm: nextImmediateStop?.distance,
+          isHalt: nextImmediateStop?.isHalt ?? false,
+        },
+        nextHalt: {
+          code: nextHaltCode,
+          name: nextHaltName,
           platform: nextHaltStop?.platform,
-          scheduledArrival: isoToHHMM(nextHaltStop?.scheduledArrival),
-          scheduledDeparture: isoToHHMM(nextHaltStop?.scheduledDeparture),
+          scheduledArrival: isoToHHMM(nextHaltStop?.scheduledArrival || nextHaltSchedStop?.arrival),
+          scheduledDeparture: isoToHHMM(nextHaltStop?.scheduledDeparture || nextHaltSchedStop?.departure),
+          actualArrival: isoToHHMM(nextHaltStop?.actualArrival),
+          actualDeparture: isoToHHMM(nextHaltStop?.actualDeparture),
+          distanceKm: nextHaltStop?.distance,
+          isHalt: true,
         },
         location: {
           lat: Number(lat.toFixed(5)),
@@ -412,8 +467,8 @@ export class RailRadarProvider implements TrainProvider {
         progressPercentage,
         distanceCoveredKm: Math.round(distanceCovered),
         distanceRemainingKm: Math.round(distanceRemaining),
-        etaNextStation: isoToHHMM(nextHaltStop?.actualArrival || nextHaltStop?.scheduledArrival),
-        etaDestination: isoToHHMM(lastHaltStop?.actualArrival || lastHaltStop?.scheduledArrival),
+        etaNextStation: etaNext || etaHalt,
+        etaDestination: etaDest,
         delayTrend: delay > 15 ? 'INCREASING' : delay > 5 ? 'STABLE' : 'DECREASING',
         lastUpdatedAt: d.lastUpdatedAt || new Date().toISOString(),
         isStale: false,
@@ -438,10 +493,57 @@ export class RailRadarProvider implements TrainProvider {
         if (stop.station) schedByCode.set(stop.station.code, stop);
       }
 
-      const haltRoutes = d.route.filter((r) => r.isHalt);
-      const currentSeq = d.currentLocation?.sequence || 0;
+      let currentLoc = d.currentLocation;
+      let currentSeq = currentLoc?.sequence || 0;
 
-      return haltRoutes.map((stop) => {
+      // Sanity check for furthest departed station
+      const departedStops = d.route.filter((r) => r.status === 'departed');
+      if (departedStops.length > 0) {
+        const lastDeparted = departedStops[departedStops.length - 1];
+        if (lastDeparted.sequence > currentSeq) {
+          currentSeq = lastDeparted.sequence;
+          currentLoc = {
+            stationCode: lastDeparted.stationCode || '',
+            stationName: lastDeparted.stationName || '',
+            sequence: lastDeparted.sequence,
+            status: 'departed',
+            isHalt: lastDeparted.isHalt,
+            distanceFromOriginKm: lastDeparted.distance || 0,
+            delayMinutes: lastDeparted.delayDeparture ?? d.delayMinutes ?? 0,
+            platform: lastDeparted.platform,
+            actualArrival: lastDeparted.actualArrival,
+            actualDeparture: lastDeparted.actualDeparture,
+          };
+        }
+      }
+
+      const haltRoutes = d.route.filter((r) => r.isHalt);
+      const isCurrentInHalts = haltRoutes.some((r) => r.stationCode === currentLoc?.stationCode);
+
+      // Combine halt stops with current live location if it's an intermediate station
+      const combinedStops: any[] = [...haltRoutes];
+      if (!isCurrentInHalts && currentLoc?.stationCode) {
+        combinedStops.push({
+          sequence: currentLoc.sequence,
+          stationCode: currentLoc.stationCode,
+          stationName: currentLoc.stationName,
+          isHalt: false,
+          status: 'at-station',
+          distance: currentLoc.distanceFromOriginKm,
+          delayArrival: currentLoc.delayMinutes,
+          delayDeparture: currentLoc.delayMinutes,
+          scheduledArrival: currentLoc.scheduledArrival,
+          scheduledDeparture: currentLoc.scheduledDeparture,
+          actualArrival: currentLoc.actualArrival,
+          actualDeparture: currentLoc.actualDeparture,
+          platform: currentLoc.platform,
+        });
+      }
+
+      // Sort by sequence along route
+      combinedStops.sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0));
+
+      return combinedStops.map((stop) => {
         const sched = schedByCode.get(stop.stationCode || '');
         const stationObj: Station = {
           code: stop.stationCode || '',
@@ -450,15 +552,11 @@ export class RailRadarProvider implements TrainProvider {
           longitude: sched?.station?.lng || 0,
         };
 
-        // Proper station status:
-        // Completed if sequence is strictly before current train position
-        // Current if it is the target next halt or train is stopped here
-        // Upcoming for subsequent stations
         let status: 'COMPLETED' | 'CURRENT' | 'UPCOMING';
-        if (stop.status === 'departed' || (stop.sequence && stop.sequence < currentSeq)) {
-          status = 'COMPLETED';
-        } else if (stop.stationCode === d.nextHalt?.stationCode || stop.status === 'at-station') {
+        if (stop.stationCode === currentLoc?.stationCode) {
           status = 'CURRENT';
+        } else if (stop.status === 'departed' || (stop.sequence && stop.sequence < currentSeq)) {
+          status = 'COMPLETED';
         } else {
           status = 'UPCOMING';
         }
@@ -472,12 +570,12 @@ export class RailRadarProvider implements TrainProvider {
           scheduledDeparture: isoToHHMM(stop.scheduledDeparture) || sched?.departure,
           actualArrival: isoToHHMM(stop.actualArrival),
           actualDeparture: isoToHHMM(stop.actualDeparture),
-          expectedArrival: stop.status === 'upcoming' ? isoToHHMM(stop.actualArrival) : undefined,
-          expectedDeparture: stop.status === 'upcoming' ? isoToHHMM(stop.actualDeparture) : undefined,
+          expectedArrival: status === 'UPCOMING' ? isoToHHMM(stop.actualArrival) : undefined,
+          expectedDeparture: status === 'UPCOMING' ? isoToHHMM(stop.actualDeparture) : undefined,
           delayMinutes: delay,
           platform: stop.platform,
           status,
-          isHalt: true,
+          isHalt: stop.isHalt ?? true,
         };
       });
     } catch (err) {

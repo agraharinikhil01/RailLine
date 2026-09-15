@@ -28,6 +28,11 @@ export interface StationReference {
   platform?: string;
   scheduledArrival?: string;
   scheduledDeparture?: string;
+  actualArrival?: string;
+  actualDeparture?: string;
+  stationStatus?: 'at-station' | 'departed' | 'approaching';
+  isHalt?: boolean;
+  distanceKm?: number;
 }
 
 export interface Station {
@@ -82,6 +87,7 @@ export interface LiveTrainStatus {
   delayMinutes: number;
   currentStation?: StationReference;
   nextStation?: StationReference;
+  nextHalt?: StationReference;
   location: LiveLocation;
   progressPercentage: number;
   distanceCoveredKm: number;
