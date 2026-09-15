@@ -23,7 +23,7 @@ const envSchema = z.object({
   PORT: z.coerce.number().default(3001),
   HOST: z.string().default('0.0.0.0'),
   CORS_ORIGIN: z.string().default('http://localhost:5173'),
-  RAILRADAR_API_KEY: z.string().optional().transform((v) => getSecret(v, 'cnJfbGl2ZV84ZjliMmExYzRlN2QzZTZhOWIxYw==')),
+  RAILRADAR_API_KEY: z.string().optional().transform((v) => getSecret(v, 'cmdfMjAwZDdkYWFjNzQzNDcwZDk2YTFmYjY0NGVjNTZhYzE=')),
   OPENWEATHER_API_KEY: z.string().optional().transform((v) => getSecret(v, 'ZTFhNzI5ZjQ1MzgxZGM0MjRhOWMyYzY2ZThhZDVkN2U=')),
   OPENTOPOGRAPHY_API_KEY: z.string().optional().transform((v) => getSecret(v, 'MTc1NjYyNDgxZGM2NjNjNmJiZDE1MTI2ZjI1NmJhZGU=')),
   MAPTILER_API_KEY: z.string().optional().transform((v) => getSecret(v, 'UmJ0YWdSeUVsdXE3MFdJd2dhbzg=')),

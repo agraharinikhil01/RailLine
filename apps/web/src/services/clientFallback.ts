@@ -618,12 +618,12 @@ function getRailRadarKey(): string {
   }
   try {
     if (typeof atob === 'function') {
-      return atob('cnJfbGl2ZV84ZjliMmExYzRlN2QzZTZhOWIxYw==');
+      return atob('cmdfMjAwZDdkYWFjNzQzNDcwZDk2YTFmYjY0NGVjNTZhYzE=');
     }
   } catch {
     // ignore
   }
-  return 'rr_live_8f9b2a1c4e7d3e6a9b1c';
+  return 'rg_200d7daac743470d96a1fb644ec56ac1';
 }
 
 // In-memory client caches
