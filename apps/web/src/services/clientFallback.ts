@@ -712,6 +712,280 @@ const POPULAR_SEARCH_CATALOG: SearchCatalogEntry[] = [
   { trainNumber: '22439', name: 'Vande Bharat Katra Express', source: 'New Delhi', sourceCode: 'NDLS', destination: 'SMVD Katra', destinationCode: 'SVDK', departureTime: '06:00', arrivalTime: '14:00', runningDays: ['Mon', 'Tue', 'Wed', 'Fri', 'Sat', 'Sun'] },
 ];
 
+function parseTimeToMinutes(timeStr?: string): number {
+  if (!timeStr) return 0;
+  const match = timeStr.match(/^(\d{1,2}):(\d{2})$/);
+  if (!match) return 0;
+  return parseInt(match[1], 10) * 60 + parseInt(match[2], 10);
+}
+
+function formatMinutesToTime(mins: number): string {
+  const norm = ((mins % 1440) + 1440) % 1440;
+  const h = Math.floor(norm / 60);
+  const m = Math.floor(norm % 60);
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+}
+
+export interface RealTimeSimulationResult {
+  currentStation: JourneyStation;
+  nextStation: JourneyStation;
+  distanceCoveredKm: number;
+  distanceRemainingKm: number;
+  progressPercentage: number;
+  speedKmph: number;
+  isStationary: boolean;
+  status: RunningStatus;
+  delayMinutes: number;
+  latitude: number;
+  longitude: number;
+  bearing: number;
+  etaNextStation: string;
+  etaDestination: string;
+  updatedStations: JourneyStation[];
+  journeyStatus: 'YET_TO_DEPART' | 'IN_TRANSIT' | 'COMPLETED';
+}
+
+export function calculateRealTimeTrainState(
+  data: TrainRouteData,
+  referenceDate?: Date
+): RealTimeSimulationResult {
+  const stations = data.stations;
+  const totalDist = data.train.totalDistanceKm || 1000;
+
+  // 1. Get current IST time
+  const now = referenceDate || new Date();
+  const istString = now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' });
+  const istDate = new Date(istString);
+  const currentMinutesOfDay = istDate.getHours() * 60 + istDate.getMinutes() + istDate.getSeconds() / 60;
+
+  // 2. Build cumulative timeline for all stops
+  const originDepStr = stations[0]?.scheduledDeparture || '06:00';
+  const originDepMinutes = parseTimeToMinutes(originDepStr);
+
+  let prevMins = originDepMinutes;
+  let dayOffset = 0;
+
+  interface CumulativeStop {
+    stationIndex: number;
+    arrMinutesFromOrigin: number;
+    depMinutesFromOrigin: number;
+  }
+
+  const cumulativeStops: CumulativeStop[] = [];
+
+  for (let i = 0; i < stations.length; i++) {
+    const st = stations[i];
+    let arrM = parseTimeToMinutes(st.scheduledArrival || st.scheduledDeparture);
+    let depM = parseTimeToMinutes(st.scheduledDeparture || st.scheduledArrival);
+
+    if (i > 0) {
+      if (arrM < prevMins - 120) {
+        dayOffset += 1440;
+      }
+      prevMins = arrM;
+    }
+
+    const arrFromOrigin = (arrM + dayOffset) - originDepMinutes;
+    if (depM < arrM) {
+      dayOffset += 1440;
+    }
+    const depFromOrigin = (depM + dayOffset) - originDepMinutes;
+    prevMins = depM;
+
+    cumulativeStops.push({
+      stationIndex: i,
+      arrMinutesFromOrigin: Math.max(0, arrFromOrigin),
+      depMinutesFromOrigin: Math.max(0, depFromOrigin),
+    });
+  }
+
+  const lastStop = cumulativeStops[cumulativeStops.length - 1];
+  const totalJourneyMinutes = lastStop.arrMinutesFromOrigin || 1200;
+
+  // 3. Determine elapsed minutes from departure for TODAY's run vs YESTERDAY's run
+  const minutesSinceTodayDeparture = currentMinutesOfDay - originDepMinutes;
+
+  let elapsedMinutes = 0;
+  let journeyStatus: 'YET_TO_DEPART' | 'IN_TRANSIT' | 'COMPLETED' = 'IN_TRANSIT';
+
+  if (minutesSinceTodayDeparture >= 0 && minutesSinceTodayDeparture <= totalJourneyMinutes + 120) {
+    // Today's train is currently running!
+    elapsedMinutes = minutesSinceTodayDeparture;
+    journeyStatus = 'IN_TRANSIT';
+  } else if (minutesSinceTodayDeparture < 0) {
+    // Before today's departure. Check if yesterday's multi-day train is still active
+    const minutesSinceYesterdayDeparture = minutesSinceTodayDeparture + 1440;
+    if (minutesSinceYesterdayDeparture >= 0 && minutesSinceYesterdayDeparture <= totalJourneyMinutes + 120) {
+      elapsedMinutes = minutesSinceYesterdayDeparture;
+      journeyStatus = 'IN_TRANSIT';
+    } else {
+      // Train is yet to depart today
+      elapsedMinutes = 0;
+      journeyStatus = 'YET_TO_DEPART';
+    }
+  } else {
+    // Train finished today's run
+    elapsedMinutes = totalJourneyMinutes;
+    journeyStatus = 'COMPLETED';
+  }
+
+  // Realistic delay
+  const baseDelay = stations[0]?.delayMinutes ?? 14;
+  const progressRatio = totalJourneyMinutes > 0 ? Math.min(1, elapsedMinutes / totalJourneyMinutes) : 0;
+  const currentDelay = Math.round(baseDelay + progressRatio * 8);
+
+  // Train's schedule position factoring in delay
+  const effectiveScheduleMinutes = Math.max(0, elapsedMinutes - currentDelay);
+
+  // 4. Find current station position
+  let passedIndex = -1;
+  for (let i = 0; i < cumulativeStops.length; i++) {
+    if (cumulativeStops[i].depMinutesFromOrigin <= effectiveScheduleMinutes) {
+      passedIndex = i;
+    } else {
+      break;
+    }
+  }
+
+  let curIdx = 0;
+  let nextIdx = 1;
+  let isStationary = false;
+  let speedKmph = 0;
+  let curLat = stations[0].station.latitude;
+  let curLng = stations[0].station.longitude;
+  let distanceCovered = 0;
+
+  if (journeyStatus === 'YET_TO_DEPART') {
+    curIdx = 0;
+    nextIdx = Math.min(1, stations.length - 1);
+    isStationary = true;
+    speedKmph = 0;
+    curLat = stations[0].station.latitude;
+    curLng = stations[0].station.longitude;
+    distanceCovered = 0;
+  } else if (journeyStatus === 'COMPLETED' || passedIndex >= stations.length - 1) {
+    curIdx = stations.length - 1;
+    nextIdx = stations.length - 1;
+    isStationary = true;
+    speedKmph = 0;
+    curLat = stations[stations.length - 1].station.latitude;
+    curLng = stations[stations.length - 1].station.longitude;
+    distanceCovered = totalDist;
+  } else {
+    // Train is between stations[passedIndex] and stations[passedIndex + 1]
+    const fromStop = cumulativeStops[passedIndex >= 0 ? passedIndex : 0];
+    const toStop = cumulativeStops[Math.min(passedIndex + 1, cumulativeStops.length - 1)];
+
+    curIdx = fromStop.stationIndex;
+    nextIdx = toStop.stationIndex;
+
+    // Check if stopped at next station halt
+    if (effectiveScheduleMinutes >= toStop.arrMinutesFromOrigin && effectiveScheduleMinutes <= toStop.depMinutesFromOrigin) {
+      isStationary = true;
+      speedKmph = 0;
+      curIdx = toStop.stationIndex;
+      nextIdx = Math.min(toStop.stationIndex + 1, stations.length - 1);
+      curLat = stations[curIdx].station.latitude;
+      curLng = stations[curIdx].station.longitude;
+      distanceCovered = stations[curIdx].distanceFromSourceKm;
+    } else {
+      // Cruising between fromStop and toStop
+      isStationary = false;
+      const segDuration = Math.max(1, toStop.arrMinutesFromOrigin - fromStop.depMinutesFromOrigin);
+      const segElapsed = Math.max(0, effectiveScheduleMinutes - fromStop.depMinutesFromOrigin);
+      const segFrac = Math.min(1, Math.max(0, segElapsed / segDuration));
+
+      const stFrom = stations[curIdx];
+      const stTo = stations[nextIdx];
+
+      curLat = stFrom.station.latitude + (stTo.station.latitude - stFrom.station.latitude) * segFrac;
+      curLng = stFrom.station.longitude + (stTo.station.longitude - stFrom.station.longitude) * segFrac;
+      distanceCovered = Math.round(stFrom.distanceFromSourceKm + (stTo.distanceFromSourceKm - stFrom.distanceFromSourceKm) * segFrac);
+
+      // Realistic speed between 78 and 108 km/h with subtle variation
+      speedKmph = 80 + Math.round(Math.sin(elapsedMinutes * 0.1) * 18);
+    }
+  }
+
+  // Bearing towards next stop
+  const targetStation = stations[nextIdx] || stations[curIdx];
+  const dLng = (targetStation.station.longitude - curLng) * (Math.PI / 180);
+  const lat1 = curLat * (Math.PI / 180);
+  const lat2 = targetStation.station.latitude * (Math.PI / 180);
+  const y = Math.sin(dLng) * Math.cos(lat2);
+  const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
+  const bearing = Math.round((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
+
+  // 5. Update station timeline statuses based on real-time position
+  const updatedStations: JourneyStation[] = stations.map((st, i) => {
+    let status: 'COMPLETED' | 'CURRENT' | 'UPCOMING';
+
+    if (journeyStatus === 'COMPLETED' || i < curIdx) {
+      status = 'COMPLETED';
+    } else if (i === curIdx || (i === nextIdx && isStationary)) {
+      status = 'CURRENT';
+    } else {
+      status = 'UPCOMING';
+    }
+
+    const schedDepM = parseTimeToMinutes(st.scheduledDeparture);
+    const schedArrM = parseTimeToMinutes(st.scheduledArrival);
+
+    const actDep = status === 'COMPLETED' ? formatMinutesToTime(schedDepM + currentDelay) : undefined;
+    const actArr = (status === 'COMPLETED' || status === 'CURRENT') && st.scheduledArrival
+      ? formatMinutesToTime(schedArrM + currentDelay)
+      : undefined;
+    const expArr = status === 'UPCOMING' && st.scheduledArrival
+      ? formatMinutesToTime(schedArrM + currentDelay)
+      : undefined;
+    const expDep = status === 'UPCOMING' && st.scheduledDeparture
+      ? formatMinutesToTime(schedDepM + currentDelay)
+      : undefined;
+
+    return {
+      ...st,
+      status,
+      delayMinutes: currentDelay,
+      actualArrival: actArr || st.actualArrival,
+      actualDeparture: actDep || st.actualDeparture,
+      expectedArrival: expArr,
+      expectedDeparture: expDep,
+    };
+  });
+
+  const currentStObj = updatedStations[curIdx] || updatedStations[0];
+  const nextStObj = updatedStations[nextIdx] || currentStObj;
+  const destStObj = updatedStations[updatedStations.length - 1];
+
+  const distanceRemaining = Math.max(0, totalDist - distanceCovered);
+  const progressPct = totalDist > 0 ? Math.min(100, Math.round((distanceCovered / totalDist) * 100)) : 0;
+
+  const nextArrM = parseTimeToMinutes(nextStObj.scheduledArrival || nextStObj.scheduledDeparture);
+  const destArrM = parseTimeToMinutes(destStObj.scheduledArrival || destStObj.scheduledDeparture);
+
+  const etaNext = formatMinutesToTime(nextArrM + currentDelay);
+  const etaDest = formatMinutesToTime(destArrM + currentDelay);
+
+  return {
+    currentStation: currentStObj,
+    nextStation: nextStObj,
+    distanceCoveredKm: distanceCovered,
+    distanceRemainingKm: distanceRemaining,
+    progressPercentage: progressPct,
+    speedKmph,
+    isStationary,
+    status: currentDelay > 10 ? 'DELAYED' : 'ON TIME',
+    delayMinutes: currentDelay,
+    latitude: Number(curLat.toFixed(5)),
+    longitude: Number(curLng.toFixed(5)),
+    bearing,
+    etaNextStation: etaNext,
+    etaDestination: etaDest,
+    updatedStations,
+    journeyStatus,
+  };
+}
+
 export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
   const clean = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
   const queryString = endpoint.includes('?') ? endpoint.split('?')[1] : '';
@@ -853,6 +1127,7 @@ export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
     getOrFetchLive(trainNumber),
   ]);
   const dbData = getOrCreateTrainRouteData(trainNumber);
+  const realTimeState = calculateRealTimeTrainState(dbData);
 
   // 1c. Historical / Date-specific Trip: trains/:trainNumber/historical?date=YYYY-MM-DD
   if (parts[0] === 'trains' && sub === 'historical') {
@@ -1164,47 +1439,39 @@ export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
       return liveStatus as unknown as T;
     }
 
-    // Database fallback
-    const stations = dbData.stations;
-    const currentIdx = Math.max(0, Math.min(stations.length - 2, Math.floor(stations.length * 0.45)));
-    const currentStation = stations[currentIdx] || stations[0];
-    const nextStation = stations[currentIdx + 1] || currentStation;
-    const totalDist = dbData.train.totalDistanceKm || 1000;
-    const covered = currentStation.distanceFromSourceKm || Math.round(totalDist * 0.45);
-    const remaining = Math.max(0, totalDist - covered);
-
+    // Database fallback (Real-Time Clock Synchronized Simulation)
     return {
       trainNumber: dbData.train.trainNumber,
       trainName: dbData.train.name,
-      status: (currentStation.delayMinutes ?? 0) > 10 ? 'DELAYED' : 'ON TIME',
-      delayMinutes: currentStation.delayMinutes ?? 12,
+      status: realTimeState.status,
+      delayMinutes: realTimeState.delayMinutes,
       currentStation: {
-        code: currentStation.station.code,
-        name: `${currentStation.station.name} (Passed)`,
-        platform: currentStation.platform || '1',
-        scheduledArrival: currentStation.scheduledArrival,
-        scheduledDeparture: currentStation.scheduledDeparture,
+        code: realTimeState.currentStation.station.code,
+        name: realTimeState.currentStation.station.name,
+        platform: realTimeState.currentStation.platform,
+        scheduledArrival: realTimeState.currentStation.scheduledArrival,
+        scheduledDeparture: realTimeState.currentStation.scheduledDeparture,
       },
       nextStation: {
-        code: nextStation.station.code,
-        name: nextStation.station.name,
-        platform: nextStation.platform || '1',
-        scheduledArrival: nextStation.scheduledArrival || '—',
-        scheduledDeparture: nextStation.scheduledDeparture,
+        code: realTimeState.nextStation.station.code,
+        name: realTimeState.nextStation.station.name,
+        platform: realTimeState.nextStation.platform,
+        scheduledArrival: realTimeState.nextStation.scheduledArrival,
+        scheduledDeparture: realTimeState.nextStation.scheduledDeparture,
       },
       location: {
-        lat: currentStation.station.latitude,
-        lng: currentStation.station.longitude,
-        bearing: 45,
-        speedKmph: 78,
+        lat: realTimeState.latitude,
+        lng: realTimeState.longitude,
+        bearing: realTimeState.bearing,
+        speedKmph: realTimeState.speedKmph,
         isInterpolated: true,
       },
-      progressPercentage: Math.min(100, Math.round((covered / totalDist) * 100)),
-      distanceCoveredKm: covered,
-      distanceRemainingKm: remaining,
-      etaNextStation: nextStation.expectedArrival || nextStation.scheduledArrival || '—',
-      etaDestination: stations[stations.length - 1]?.expectedArrival || stations[stations.length - 1]?.scheduledArrival || '—',
-      delayTrend: 'STABLE',
+      progressPercentage: realTimeState.progressPercentage,
+      distanceCoveredKm: realTimeState.distanceCoveredKm,
+      distanceRemainingKm: realTimeState.distanceRemainingKm,
+      etaNextStation: realTimeState.etaNextStation,
+      etaDestination: realTimeState.etaDestination,
+      delayTrend: realTimeState.delayMinutes > 15 ? 'INCREASING' : realTimeState.delayMinutes > 5 ? 'STABLE' : 'DECREASING',
       lastUpdatedAt: new Date().toISOString(),
       isStale: false,
       operatingDays: dbData.train.operatingDays,
@@ -1287,12 +1554,13 @@ export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
 
     // Fallback GeoJSON
     const coords = dbData.routeCoordinates;
-    const splitIdx = Math.floor(coords.length * 0.45);
+    const splitRatio = Math.max(0.02, Math.min(0.98, realTimeState.progressPercentage / 100));
+    const splitIdx = Math.floor(coords.length * splitRatio);
     const features: any[] = [
-      { type: 'Feature', properties: { segment: 'completed', trainNumber }, geometry: { type: 'LineString', coordinates: coords.slice(0, splitIdx + 2) } },
-      { type: 'Feature', properties: { segment: 'remaining', trainNumber }, geometry: { type: 'LineString', coordinates: coords.slice(splitIdx) } },
+      { type: 'Feature', properties: { segment: 'completed', trainNumber }, geometry: { type: 'LineString', coordinates: coords.slice(0, Math.min(coords.length, splitIdx + 2)) } },
+      { type: 'Feature', properties: { segment: 'remaining', trainNumber }, geometry: { type: 'LineString', coordinates: coords.slice(Math.max(0, splitIdx)) } },
     ];
-    dbData.stations.forEach((st) => {
+    realTimeState.updatedStations.forEach((st) => {
       features.push({
         type: 'Feature',
         properties: { code: st.station.code, name: st.station.name, isHalt: true, stationType: 'halt', status: st.status, platform: st.platform },
@@ -1350,31 +1618,13 @@ export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
       });
 
       return stations as unknown as T;
-    } else if (liveSched?.route) {
-      const halts = liveSched.route.filter((s: any) => s.isHalt && s.station);
-      const stations: JourneyStation[] = halts.map((s: any, idx: number) => ({
-        station: {
-          code: s.station.code,
-          name: s.station.name,
-          latitude: s.station.lat,
-          longitude: s.station.lng,
-        },
-        distanceFromSourceKm: Math.round(s.distance || 0),
-        scheduledArrival: s.arrival,
-        scheduledDeparture: s.departure,
-        platform: s.platform,
-        delayMinutes: 0,
-        status: idx < 3 ? 'COMPLETED' : idx === 3 ? 'CURRENT' : 'UPCOMING',
-        isHalt: true,
-      }));
-      return stations as unknown as T;
     }
-    return dbData.stations as unknown as T;
+    return realTimeState.updatedStations as unknown as T;
   }
 
   // 6. Elevation: trains/:trainNumber/elevation
   if (parts[0] === 'trains' && sub === 'elevation') {
-    const profile = dbData.stations.map((st, i) => {
+    const profile = realTimeState.updatedStations.map((st, i) => {
       const elev = 140 + Math.round(Math.sin(i * 0.6) * 60 + (i * 8));
       return {
         distanceKm: st.distanceFromSourceKm,
@@ -1383,7 +1633,7 @@ export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
         stationName: st.station.name,
       };
     });
-    const currentElev = profile[Math.floor(profile.length * 0.45)]?.elevationMeters || 190;
+    const currentElev = profile.find((p) => p.stationCode === realTimeState.currentStation.station.code)?.elevationMeters || profile[0]?.elevationMeters || 190;
     const maxElev = Math.max(...profile.map((p) => p.elevationMeters));
     const minElev = Math.min(...profile.map((p) => p.elevationMeters));
     return {
@@ -1408,7 +1658,7 @@ export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
         distanceKm: Math.round(s.distance || 0),
       })) as unknown as T;
     }
-    return dbData.stations.map((s) => ({
+    return realTimeState.updatedStations.map((s) => ({
       stationCode: s.station.code,
       stationName: s.station.name,
       scheduledTime: s.scheduledArrival || s.scheduledDeparture || '00:00',
@@ -1420,9 +1670,9 @@ export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
 
   // 8. Weather: trains/:trainNumber/weather
   if (parts[0] === 'trains' && sub === 'weather') {
-    const curSt = dbData.stations[Math.floor(dbData.stations.length * 0.45)] || dbData.stations[0];
-    const nextSt = dbData.stations[Math.floor(dbData.stations.length * 0.45) + 1] || curSt;
-    const destSt = dbData.stations[dbData.stations.length - 1] || curSt;
+    const curSt = realTimeState.updatedStations.find((s) => s.station.code === realTimeState.currentStation.station.code) || realTimeState.updatedStations[0];
+    const nextSt = realTimeState.updatedStations.find((s) => s.station.code === realTimeState.nextStation.station.code) || curSt;
+    const destSt = realTimeState.updatedStations[realTimeState.updatedStations.length - 1] || curSt;
     const routeWeather: RouteWeather = {
       currentStationWeather: {
         stationName: curSt.station.name,
@@ -1467,7 +1717,7 @@ export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
 
   // 9. Places: trains/:trainNumber/places
   if (parts[0] === 'trains' && sub === 'places') {
-    const curSt = dbData.stations[Math.floor(dbData.stations.length * 0.45)] || dbData.stations[0];
+    const curSt = realTimeState.updatedStations.find((s) => s.station.code === realTimeState.currentStation.station.code) || realTimeState.updatedStations[0];
     const places: GeographicPlace[] = [
       {
         id: 'poi-1',
@@ -1499,6 +1749,7 @@ export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
     ];
     return places as unknown as T;
   }
+
 
   // 10. Sharing: journeys/share
   if (parts[0] === 'journeys' && parts[1] === 'share') {
