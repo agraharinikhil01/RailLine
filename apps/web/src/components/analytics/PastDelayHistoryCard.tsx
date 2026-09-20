@@ -13,6 +13,8 @@ import { JourneyStation } from '@railline/types';
 import { StationDelayPoint, HistoricalTripData, trainApi } from '../../services/trainService';
 import { DelayChart } from './DelayChart';
 
+const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
+
 export interface PastDelayHistoryCardProps {
   timeline: JourneyStation[];
   delayHistory: StationDelayPoint[];
@@ -71,10 +73,16 @@ export const PastDelayHistoryCard: React.FC<PastDelayHistoryCardProps> = ({
   const [isHistoryLoading, setIsHistoryLoading] = useState<boolean>(false);
   const [historyError, setHistoryError] = useState<string | null>(null);
 
-  const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const safeOperatingDays = useMemo(() => {
+    return (Array.isArray(operatingDays) && operatingDays.length > 0
+      ? operatingDays
+      : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+    ).filter((d): d is string => typeof d === 'string');
+  }, [operatingDays]);
+
   const activeDaysSet = useMemo(
-    () => new Set(operatingDays.map((d) => d.toLowerCase().slice(0, 3))),
-    [operatingDays]
+    () => new Set(safeOperatingDays.map((d) => d.toLowerCase().slice(0, 3))),
+    [safeOperatingDays]
   );
 
   // Fetch real historical train run data from NTES/RailRadar whenever selectedDate or trainNumber changes
@@ -106,16 +114,18 @@ export const PastDelayHistoryCard: React.FC<PastDelayHistoryCardProps> = ({
   }, [trainNumber, selectedDate]);
 
   // Filter completed stations (stations where train has already arrived / passed on current trip)
-  const completedStations = timeline.filter((s) => s.status === 'COMPLETED');
-  const stationsToShow = completedStations.length > 0 ? completedStations : timeline.slice(0, 5);
+  const safeTimeline = Array.isArray(timeline) ? timeline : [];
+  const completedStations = safeTimeline.filter((s) => s && s.status === 'COMPLETED');
+  const stationsToShow = completedStations.length > 0 ? completedStations : safeTimeline.slice(0, 5);
 
   // Compute metrics from passed stations
   const totalPassed = completedStations.length;
-  const delaysArray = completedStations.map((s) => Math.max(0, s.delayMinutes || 0));
+  const delaysArray = completedStations
+    .map((s) => (typeof s?.delayMinutes === 'number' && !isNaN(s.delayMinutes) ? Math.max(0, s.delayMinutes) : 0));
   const avgDelay = delaysArray.length > 0
     ? Math.round(delaysArray.reduce((acc, v) => acc + v, 0) / delaysArray.length)
-    : Math.max(0, currentDelayMinutes);
-  const maxDelay = delaysArray.length > 0 ? Math.max(...delaysArray) : currentDelayMinutes;
+    : Math.max(0, typeof currentDelayMinutes === 'number' && !isNaN(currentDelayMinutes) ? currentDelayMinutes : 0);
+  const maxDelay = delaysArray.length > 0 ? Math.max(...delaysArray) : (currentDelayMinutes || 0);
   const onTimeCount = delaysArray.filter((d) => d <= 15).length;
   const punctualityScore = delaysArray.length > 0
     ? Math.round((onTimeCount / delaysArray.length) * 100)
@@ -173,15 +183,20 @@ export const PastDelayHistoryCard: React.FC<PastDelayHistoryCardProps> = ({
   // Helper to format selected date label
   const selectedDateLabel = useMemo(() => {
     if (!selectedDate) return '';
-    const [y, m, d] = selectedDate.split('-').map(Number);
-    const dateObj = new Date(Date.UTC(y, (m || 1) - 1, d || 1, 12, 0, 0));
-    return dateObj.toLocaleDateString('en-IN', {
-      timeZone: 'Asia/Kolkata',
-      weekday: 'long',
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    });
+    try {
+      const [y, m, d] = selectedDate.split('-').map(Number);
+      const dateObj = new Date(Date.UTC(y, (m || 1) - 1, d || 1, 12, 0, 0));
+      if (isNaN(dateObj.getTime())) return selectedDate;
+      return dateObj.toLocaleDateString('en-IN', {
+        timeZone: 'Asia/Kolkata',
+        weekday: 'long',
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+      });
+    } catch {
+      return selectedDate;
+    }
   }, [selectedDate]);
 
   const setRelativeDay = (daysAgo: number) => {

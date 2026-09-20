@@ -32,6 +32,9 @@ export async function apiClient<T>(endpoint: string, options?: RequestInit): Pro
         if (data.data !== undefined) {
           return data.data as T;
         }
+        if (data.type === 'FeatureCollection' || Array.isArray(data) || data.features !== undefined) {
+          return data as T;
+        }
         if (endpoint === '/health' || endpoint === '/api' || endpoint === '/api/health') {
           return data as T;
         }

@@ -19,14 +19,19 @@ const ALL_DAYS = [
 ];
 
 export const WeeklyScheduleCard: React.FC<WeeklyScheduleCardProps> = ({
-  operatingDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+  operatingDays,
   trainNumber,
   trainName,
   className = '',
 }) => {
-  // Normalize days to lowercase 3-letter strings for safe comparison
+  // Normalize days to lowercase 3-letter strings with defensive fallbacks
+  const safeDays = (Array.isArray(operatingDays) && operatingDays.length > 0
+    ? operatingDays
+    : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+  ).filter((d): d is string => typeof d === 'string');
+
   const activeDaysSet = new Set(
-    operatingDays.map((d) => d.toLowerCase().slice(0, 3))
+    safeDays.map((d) => d.toLowerCase().slice(0, 3))
   );
 
   const totalRunningDays = ALL_DAYS.filter((d) =>
@@ -147,7 +152,7 @@ export const WeeklyScheduleCard: React.FC<WeeklyScheduleCardProps> = ({
               <span>Runs all 7 days of the week (Monday through Sunday) without any scheduled off-days.</span>
             ) : (
               <span>
-                Operates on <strong>{operatingDays.join(', ')}</strong> ({totalRunningDays} days/week).
+                Operates on <strong>{safeDays.join(', ')}</strong> ({totalRunningDays} days/week).
               </span>
             )}
           </div>

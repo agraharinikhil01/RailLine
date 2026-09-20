@@ -4,6 +4,7 @@ import { Button } from './Button';
 
 interface Props {
   children: ReactNode;
+  fallback?: ReactNode;
 }
 
 interface State {
@@ -24,8 +25,8 @@ export class ErrorBoundary extends Component<Props, State> {
     console.error('[RailLine Uncaught Error]:', error, errorInfo);
   }
 
-  private handleReload = () => {
-    window.location.reload();
+  private handleTryAgain = () => {
+    this.setState({ hasError: false, error: undefined });
   };
 
   private handleGoHome = () => {
@@ -34,6 +35,10 @@ export class ErrorBoundary extends Component<Props, State> {
 
   public render() {
     if (this.state.hasError) {
+      if (this.props.fallback) {
+        return this.props.fallback;
+      }
+
       return (
         <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
           <div className="max-w-md w-full bg-white rounded-3xl border border-slate-200 p-8 shadow-sm text-center">
@@ -44,16 +49,16 @@ export class ErrorBoundary extends Component<Props, State> {
               Something unexpected occurred
             </h2>
             <p className="text-xs text-slate-500 mb-6 leading-relaxed">
-              RailLine encountered an unexpected state. Your saved data is safe. Please reload the app or return to the home screen.
+              RailLine encountered an unexpected state. Your saved data is safe. Please retry or return to the home screen.
             </p>
             <div className="flex items-center justify-center gap-3">
               <Button variant="secondary" size="sm" onClick={this.handleGoHome}>
                 <Home className="w-3.5 h-3.5 mr-1.5" />
                 Home
               </Button>
-              <Button variant="primary" size="sm" onClick={this.handleReload}>
+              <Button variant="primary" size="sm" onClick={this.handleTryAgain}>
                 <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
-                Reload
+                Try Again
               </Button>
             </div>
           </div>

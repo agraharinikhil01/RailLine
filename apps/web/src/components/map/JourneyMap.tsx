@@ -266,9 +266,9 @@ export const JourneyMap: React.FC<JourneyMapProps> = ({
         const name = props.name;
         const ptCoords = (e.features[0].geometry as GeoJSON.Point).coordinates as [number, number];
 
-        const matched = stations?.find((s) => s.station.code === code);
+        const matched = stations?.find((s) => (s.station?.code || (s as any).stationCode) === code);
         if (matched) {
-          const idx = stations.findIndex((s) => s.station.code === code);
+          const idx = stations.findIndex((s) => (s.station?.code || (s as any).stationCode) === code);
           if (idx !== -1) {
             cruiseIndexRef.current = idx;
             setCruiseIndex(idx);
@@ -329,8 +329,8 @@ export const JourneyMap: React.FC<JourneyMapProps> = ({
   useEffect(() => {
     if (!mapContainerRef.current) return;
 
-    const initialLng = status.location.lng || 77.2195;
-    const initialLat = status.location.lat || 28.6429;
+    const initialLng = status.location?.lng ?? 77.2195;
+    const initialLat = status.location?.lat ?? 28.6429;
 
     const map = new maplibregl.Map({
       container: mapContainerRef.current,
@@ -338,7 +338,7 @@ export const JourneyMap: React.FC<JourneyMapProps> = ({
       center: [initialLng, initialLat],
       zoom: 7.5,
       pitch: 42, // 3D perspective pitch angle for realistic aerial navigation
-      bearing: status.location.bearing || 0,
+      bearing: status.location?.bearing ?? 0,
       attributionControl: false,
     });
 
@@ -410,10 +410,10 @@ export const JourneyMap: React.FC<JourneyMapProps> = ({
     if (!map || !mapLoaded) return;
 
     // 1. LIVE TRAIN LOCOMOTIVE MARKER
-    const speed = status.location.speedKmph || 0;
-    const bearing = status.location.bearing || 0;
-    const trainLng = status.location.lng;
-    const trainLat = status.location.lat;
+    const speed = status.location?.speedKmph ?? 0;
+    const bearing = status.location?.bearing ?? 0;
+    const trainLng = status.location?.lng;
+    const trainLat = status.location?.lat;
 
     if (trainLng && trainLat) {
       if (!trainMarkerElRef.current) {
@@ -489,8 +489,8 @@ export const JourneyMap: React.FC<JourneyMapProps> = ({
     let targetEta = status.etaNextStation || status.nextStation?.scheduledArrival;
 
     if (nextCode) {
-      const st = stations?.find((s) => s.station.code === nextCode);
-      if (st) {
+      const st = stations?.find((s) => (s.station?.code || (s as any).stationCode) === nextCode);
+      if (st && st.station?.longitude && st.station?.latitude) {
         nextCoords = [st.station.longitude, st.station.latitude];
         if (!targetStationName) targetStationName = st.station.name;
         if (!targetPlatform) targetPlatform = st.platform;

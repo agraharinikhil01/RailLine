@@ -25,7 +25,8 @@ export const JourneyTimeline: React.FC<JourneyTimelineProps> = ({
       </div>
 
       <div className="flex-1 overflow-y-auto pr-1 space-y-4 no-scrollbar">
-        {stations.map((item) => {
+        {stations.map((item, idx) => {
+          if (!item) return null;
           const isCompleted = item.status === 'COMPLETED';
           const isCurrent = item.status === 'CURRENT';
 
@@ -33,9 +34,12 @@ export const JourneyTimeline: React.FC<JourneyTimelineProps> = ({
             ? item.actualArrival || item.scheduledArrival || item.actualDeparture || item.scheduledDeparture
             : item.expectedArrival || item.scheduledArrival || item.expectedDeparture || item.scheduledDeparture;
 
+          const stCode = item.station?.code || (item as any).stationCode || `STN-${idx}`;
+          const stName = item.station?.name || (item as any).stationName || stCode;
+
           return (
             <div
-              key={item.station.code}
+              key={`${stCode}-${idx}`}
               onClick={() => onSelectStation?.(item)}
               className={clsx(
                 'flex items-start justify-between gap-3 p-2 rounded-xl transition-all cursor-pointer',
@@ -70,7 +74,7 @@ export const JourneyTimeline: React.FC<JourneyTimelineProps> = ({
                           : 'font-medium text-slate-600'
                       )}
                     >
-                      {item.station.name} ({item.station.code})
+                      {stName} ({stCode})
                     </span>
 
                     {/* LIVE LOCATION Badge if Current */}
@@ -89,7 +93,7 @@ export const JourneyTimeline: React.FC<JourneyTimelineProps> = ({
                   </div>
 
                   <span className="text-[11px] font-mono text-slate-400 block mt-0.5">
-                    {item.distanceFromSourceKm} km
+                    {item.distanceFromSourceKm ?? 0} km
                   </span>
                 </div>
               </div>

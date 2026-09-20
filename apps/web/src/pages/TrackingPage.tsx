@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useParams, Link as RouterLink } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -33,6 +33,7 @@ import { RouteWeatherStrip } from '../components/weather/RouteWeatherStrip';
 import { GeographyCard } from '../components/companion/GeographyCard';
 import { ShareModal } from '../components/sharing/ShareModal';
 import { ErrorState } from '../components/ui/ErrorState';
+import { SectionErrorBoundary } from '../components/ui/SectionErrorBoundary';
 import { JourneyStation } from '@railline/types';
 
 // Circular Progress Ring matching image 1 (e.g. 57%)
@@ -107,7 +108,13 @@ export const TrackingPage: React.FC = () => {
   const { places } = useNearbyPlaces(trainNumber);
 
   // Combined operating days from details or status
-  const operatingDays = trainDetails?.operatingDays || status?.operatingDays || ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const rawOperatingDays = trainDetails?.operatingDays || status?.operatingDays || ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const operatingDays = useMemo(() => {
+    return (Array.isArray(rawOperatingDays) && rawOperatingDays.length > 0
+      ? rawOperatingDays
+      : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+    ).filter((d): d is string => typeof d === 'string');
+  }, [rawOperatingDays]);
 
   const handleOpenShare = async () => {
     setIsShareModalOpen(true);
@@ -210,7 +217,7 @@ export const TrackingPage: React.FC = () => {
               <span className="text-[10px] text-slate-400 font-medium">Runs:</span>
               {(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const).map((day) => {
                 const isRunning = operatingDays.some(
-                  (d) => d.toLowerCase().slice(0, 3) === day.toLowerCase().slice(0, 3)
+                  (d) => typeof d === 'string' && d.toLowerCase().slice(0, 3) === day.toLowerCase().slice(0, 3)
                 );
                 return (
                   <span
@@ -438,31 +445,62 @@ export const TrackingPage: React.FC = () => {
           <div className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
               <div className="lg:col-span-7 xl:col-span-8 2xl:col-span-8 rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden h-[580px] sm:h-[640px] lg:h-[700px] relative bg-slate-950">
-                <JourneyMap
-                  status={status}
-                  routeGeoJSON={routeGeoJSON}
-                  stations={timeline}
-                  selectedStation={selectedStation}
-                  onStationSelect={handleStationClick}
-                  className="w-full h-full"
-                />
+                <SectionErrorBoundary title="Interactive Map">
+                  <JourneyMap
+                    status={status}
+                    routeGeoJSON={routeGeoJSON}
+                    stations={timeline}
+                    selectedStation={selectedStation}
+                    onStationSelect={handleStationClick}
+                    className="w-full h-full"
+                  />
+                </SectionErrorBoundary>
               </div>
               <div className="lg:col-span-5 xl:col-span-4 2xl:col-span-4 rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm h-[580px] sm:h-[640px] lg:h-[700px] flex flex-col">
-                <JourneyTimeline
-                  stations={timeline}
-                  onSelectStation={handleStationClick}
-                  className="h-full"
-                />
+                <SectionErrorBoundary title="Live Journey Timeline">
+                  <JourneyTimeline
+                    stations={timeline}
+                    onSelectStation={handleStationClick}
+                    className="h-full"
+                  />
+                </SectionErrorBoundary>
               </div>
             </div>
 
             {/* Weekly Schedule & Past Delay Record Section */}
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+              <SectionErrorBoundary title="Weekly Schedule">
+                <WeeklyScheduleCard
+                  operatingDays={operatingDays}
+                  trainNumber={status.trainNumber}
+                  trainName={status.trainName}
+                />
+              </SectionErrorBoundary>
+              <SectionErrorBoundary title="Past Delay History">
+                <PastDelayHistoryCard
+                  timeline={timeline}
+                  delayHistory={delayHistory}
+                  trainNumber={status.trainNumber}
+                  trainName={status.trainName}
+                  operatingDays={operatingDays}
+                  currentDelayMinutes={status.delayMinutes}
+                  isLoading={isDelaysLoading}
+                />
+              </SectionErrorBoundary>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'history' && (
+          <div className="space-y-6">
+            <SectionErrorBoundary title="Weekly Schedule">
               <WeeklyScheduleCard
                 operatingDays={operatingDays}
                 trainNumber={status.trainNumber}
                 trainName={status.trainName}
               />
+            </SectionErrorBoundary>
+            <SectionErrorBoundary title="Past Delay History">
               <PastDelayHistoryCard
                 timeline={timeline}
                 delayHistory={delayHistory}
@@ -472,59 +510,48 @@ export const TrackingPage: React.FC = () => {
                 currentDelayMinutes={status.delayMinutes}
                 isLoading={isDelaysLoading}
               />
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'history' && (
-          <div className="space-y-6">
-            <WeeklyScheduleCard
-              operatingDays={operatingDays}
-              trainNumber={status.trainNumber}
-              trainName={status.trainName}
-            />
-            <PastDelayHistoryCard
-              timeline={timeline}
-              delayHistory={delayHistory}
-              trainNumber={status.trainNumber}
-              trainName={status.trainName}
-              operatingDays={operatingDays}
-              currentDelayMinutes={status.delayMinutes}
-              isLoading={isDelaysLoading}
-            />
+            </SectionErrorBoundary>
           </div>
         )}
 
         {activeTab === 'weather' && (
           <div className="space-y-4">
-            {routeWeather && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <WeatherCard
-                  weather={routeWeather.currentStationWeather}
-                  label="Current Station"
-                  badgeText="Live"
-                />
-                <WeatherCard
-                  weather={routeWeather.nextStationWeather}
-                  label="Next Station"
-                  badgeText="Upcoming"
-                />
-                <WeatherCard
-                  weather={routeWeather.destinationWeather}
-                  label="Destination"
-                  badgeText="Arrival"
-                />
-              </div>
-            )}
-            {routeWeather && <RouteWeatherStrip routeWeather={routeWeather} />}
-            <GeographyCard places={places} />
+            <SectionErrorBoundary title="Weather Companion">
+              {routeWeather && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <WeatherCard
+                    weather={routeWeather.currentStationWeather}
+                    label="Current Station"
+                    badgeText="Live"
+                  />
+                  <WeatherCard
+                    weather={routeWeather.nextStationWeather}
+                    label="Next Station"
+                    badgeText="Upcoming"
+                  />
+                  <WeatherCard
+                    weather={routeWeather.destinationWeather}
+                    label="Destination"
+                    badgeText="Arrival"
+                  />
+                </div>
+              )}
+              {routeWeather && <RouteWeatherStrip routeWeather={routeWeather} />}
+            </SectionErrorBoundary>
+            <SectionErrorBoundary title="Nearby Places">
+              <GeographyCard places={places} />
+            </SectionErrorBoundary>
           </div>
         )}
 
         {activeTab === 'elevation' && (
           <div className="space-y-4">
-            <ElevationChart summary={elevationSummary} isLoading={isElevationLoading} />
-            <DelayChart delays={delayHistory} isLoading={isDelaysLoading} />
+            <SectionErrorBoundary title="Elevation Chart">
+              <ElevationChart summary={elevationSummary} isLoading={isElevationLoading} />
+            </SectionErrorBoundary>
+            <SectionErrorBoundary title="Delay Statistics">
+              <DelayChart delays={delayHistory} isLoading={isDelaysLoading} />
+            </SectionErrorBoundary>
           </div>
         )}
       </div>
