@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import maplibregl from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
 import {
   Maximize2,
   Minimize2,
@@ -32,32 +33,64 @@ export interface JourneyMapProps {
 
 export type MapStyleKey = 'satellite' | 'dark' | 'outdoor';
 
-const maptilerKey = import.meta.env.VITE_MAPTILER_API_KEY || 'RbtagRyEluq70WIwgao8';
+// Ultra-reliable standalone ESRI World Satellite style (Requires NO API key, 100% free, never blocked)
+const ESRI_SATELLITE_STYLE: maplibregl.StyleSpecification = {
+  version: 8,
+  sources: {
+    'esri-imagery': {
+      type: 'raster',
+      tiles: [
+        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      ],
+      tileSize: 256,
+      maxzoom: 19,
+      attribution: '© Esri, Maxar, Earthstar Geographics',
+    },
+    'carto-labels': {
+      type: 'raster',
+      tiles: [
+        'https://cartodb-basemaps-a.global.ssl.fastly.net/light_only_labels/{z}/{x}/{y}.png',
+      ],
+      tileSize: 256,
+      maxzoom: 19,
+    },
+  },
+  layers: [
+    {
+      id: 'esri-imagery-layer',
+      type: 'raster',
+      source: 'esri-imagery',
+      minzoom: 0,
+      maxzoom: 19,
+    },
+    {
+      id: 'carto-labels-layer',
+      type: 'raster',
+      source: 'carto-labels',
+      minzoom: 3,
+      maxzoom: 19,
+    },
+  ],
+};
 
-const MAP_STYLES: Record<MapStyleKey, { label: string; icon: string; url: string; desc: string }> = {
+const MAP_STYLES: Record<MapStyleKey, { label: string; icon: string; style: string | maplibregl.StyleSpecification; desc: string }> = {
   satellite: {
     label: 'Real Satellite',
     icon: '🛰️',
-    url: maptilerKey && maptilerKey !== 'default_key'
-      ? `https://api.maptiler.com/maps/hybrid/style.json?key=${maptilerKey}`
-      : 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
-    desc: 'Photorealistic Earth & Tracks',
+    style: ESRI_SATELLITE_STYLE,
+    desc: 'High-Res Earth Photography',
+  },
+  outdoor: {
+    label: 'Track & Topo',
+    icon: '🗺️',
+    style: 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json',
+    desc: 'Detailed Tracks, Stations & Roads',
   },
   dark: {
     label: 'Cyber Dark',
     icon: '🌌',
-    url: maptilerKey && maptilerKey !== 'default_key'
-      ? `https://api.maptiler.com/maps/dataviz-dark/style.json?key=${maptilerKey}`
-      : 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+    style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
     desc: 'Neon Glowing Route',
-  },
-  outdoor: {
-    label: '3D Topo',
-    icon: '🏔️',
-    url: maptilerKey && maptilerKey !== 'default_key'
-      ? `https://api.maptiler.com/maps/outdoor-v2/style.json?key=${maptilerKey}`
-      : 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
-    desc: 'Elevation Relief & Landscape',
   },
 };
 
@@ -351,7 +384,7 @@ export const JourneyMap: React.FC<JourneyMapProps> = ({
     try {
       map = new maplibregl.Map({
         container: mapContainerRef.current,
-        style: MAP_STYLES.satellite.url,
+        style: MAP_STYLES[currentStyle].style,
         center: [initialLng, initialLat],
         zoom: 7.5,
         pitch: 42, // 3D perspective pitch angle for realistic aerial navigation
@@ -359,11 +392,11 @@ export const JourneyMap: React.FC<JourneyMapProps> = ({
         attributionControl: false,
       });
     } catch (err) {
-      console.warn('[JourneyMap] Primary map initialization failed, fallback to dark-matter:', err);
+      console.warn('[JourneyMap] Primary map initialization failed, fallback to voyager:', err);
       try {
         map = new maplibregl.Map({
           container: mapContainerRef.current,
-          style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+          style: 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json',
           center: [initialLng, initialLat],
           zoom: 7.5,
           pitch: 42,
@@ -382,11 +415,10 @@ export const JourneyMap: React.FC<JourneyMapProps> = ({
     map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-left');
 
     map.on('error', (e) => {
-      // If hybrid satellite style tile fails or 403, fallback to dark style
       if (e?.error && typeof e.error.message === 'string' && e.error.message.includes('style')) {
-        console.warn('[JourneyMap] Style error caught, falling back to Carto dark style:', e.error);
+        console.warn('[JourneyMap] Style error caught, falling back to Carto voyager style:', e.error);
         try {
-          map.setStyle('https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json');
+          map.setStyle('https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json');
         } catch {
           // ignore
         }
@@ -396,6 +428,8 @@ export const JourneyMap: React.FC<JourneyMapProps> = ({
     map.on('load', () => {
       setMapLoaded(true);
       map.resize();
+      setTimeout(() => map.resize(), 100);
+      setTimeout(() => map.resize(), 500);
       if (routeGeoJSON) {
         addRouteLayersToMap(map, routeGeoJSON);
       }
@@ -438,7 +472,7 @@ export const JourneyMap: React.FC<JourneyMapProps> = ({
     setCurrentStyle(styleKey);
     setIsStyleMenuOpen(false);
 
-    map.setStyle(MAP_STYLES[styleKey].url);
+    map.setStyle(MAP_STYLES[styleKey].style);
     map.once('style.load', () => {
       if (routeGeoJSON) {
         addRouteLayersToMap(map, routeGeoJSON);
@@ -830,9 +864,9 @@ export const JourneyMap: React.FC<JourneyMapProps> = ({
   const currentCruiseStation = stations[cruiseIndex] || stations[0];
 
   return (
-    <div className={`relative w-full h-full min-h-0 bg-slate-950 overflow-hidden ${className}`}>
+    <div className={`relative w-full h-full min-h-[420px] bg-slate-950 overflow-hidden ${className}`}>
       {/* MapLibre Canvas */}
-      <div ref={mapContainerRef} className="w-full h-full min-h-0" />
+      <div ref={mapContainerRef} className="absolute inset-0 w-full h-full" />
 
       {/* TOP LEFT: Map Style Switcher (Satellite, Cyber Dark, 3D Topo) */}
       <div className="absolute top-4 left-4 z-20 flex items-center gap-2">
