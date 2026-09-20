@@ -11,6 +11,7 @@ import {
   Sun,
   Mountain,
   History,
+  Calendar,
 } from 'lucide-react';
 import { useLiveStatus } from '../hooks/useLiveStatus';
 import { useRouteGeometry } from '../hooks/useRouteGeometry';
@@ -115,6 +116,17 @@ export const TrackingPage: React.FC = () => {
       : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
     ).filter((d): d is string => typeof d === 'string');
   }, [rawOperatingDays]);
+
+  // Today's present date with day in Indian Standard Time (IST)
+  const todayDateWithDay = useMemo(() => {
+    return new Intl.DateTimeFormat('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      weekday: 'long',
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    }).format(new Date());
+  }, []);
 
   const handleOpenShare = async () => {
     setIsShareModalOpen(true);
@@ -278,9 +290,15 @@ export const TrackingPage: React.FC = () => {
                 <MapPin className="w-5 h-5" />
               </div>
               <div className="min-w-0">
-                <span className="text-[10px] sm:text-[11px] font-bold tracking-wider text-slate-400 uppercase block">
-                  CURRENT LOCATION
-                </span>
+                <div className="flex items-center justify-between gap-2 flex-wrap mb-0.5">
+                  <span className="text-[10px] sm:text-[11px] font-bold tracking-wider text-slate-400 uppercase block">
+                    CURRENT LOCATION
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 border border-sky-200/80 font-mono text-[11px] font-bold shadow-2xs">
+                    <Calendar className="w-3 h-3 text-sky-500" />
+                    <span>{todayDateWithDay}</span>
+                  </span>
+                </div>
                 <div className="flex items-center gap-2 flex-wrap mt-0.5">
                   <span className="text-xl sm:text-2xl font-extrabold text-slate-900 truncate block">
                     {status.currentStation?.name || 'In Transit'}
@@ -379,8 +397,15 @@ export const TrackingPage: React.FC = () => {
               <CircularProgressRing percentage={status.progressPercentage || 0} />
             </div>
           </div>
-          <div className="border-t border-slate-100/90 mt-5 pt-3 flex items-center justify-between text-[11px] text-slate-400 font-mono">
-            <span>Auto-refreshes every 30 seconds</span>
+          <div className="border-t border-slate-100/90 mt-5 pt-3 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400 font-mono">
+            <div className="flex items-center gap-2">
+              <span className="text-slate-700 font-semibold flex items-center gap-1">
+                <Calendar className="w-3.5 h-3.5 text-sky-500" />
+                {todayDateWithDay}
+              </span>
+              <span>•</span>
+              <span>Auto-refreshes every 30 seconds</span>
+            </div>
             <span>Updated: Just now</span>
           </div>
         </div>
@@ -460,6 +485,7 @@ export const TrackingPage: React.FC = () => {
                 <SectionErrorBoundary title="Live Journey Timeline">
                   <JourneyTimeline
                     stations={timeline}
+                    routeGeoJSON={routeGeoJSON}
                     onSelectStation={handleStationClick}
                     className="h-full"
                   />

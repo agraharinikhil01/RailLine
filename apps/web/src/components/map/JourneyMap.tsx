@@ -97,17 +97,29 @@ export const JourneyMap: React.FC<JourneyMapProps> = ({
   const addRouteLayersToMap = useCallback(
     (map: maplibregl.Map, geojson?: GeoJSON.FeatureCollection<GeoJSON.Geometry>) => {
       if (!map || !geojson) return;
-      const sourceId = 'railline-route-source';
 
-      const existingSource = map.getSource(sourceId) as maplibregl.GeoJSONSource | undefined;
-      if (existingSource) {
-        existingSource.setData(geojson);
-      } else {
-        map.addSource(sourceId, {
-          type: 'geojson',
-          data: geojson,
-        });
-      }
+      try {
+        if (!map.isStyleLoaded()) {
+          map.once('style.load', () => {
+            try {
+              addRouteLayersToMap(map, geojson);
+            } catch (err) {
+              console.warn('[JourneyMap] Error re-adding route layers after style load:', err);
+            }
+          });
+          return;
+        }
+
+        const sourceId = 'railline-route-source';
+        const existingSource = map.getSource(sourceId) as maplibregl.GeoJSONSource | undefined;
+        if (existingSource) {
+          existingSource.setData(geojson);
+        } else {
+          map.addSource(sourceId, {
+            type: 'geojson',
+            data: geojson,
+          });
+        }
 
       // Remaining Route Layer (dashed amber / slate line)
       if (!map.getLayer('route-remaining')) {
@@ -321,31 +333,65 @@ export const JourneyMap: React.FC<JourneyMapProps> = ({
       map.on('mouseleave', 'route-intermediate-stations', () => {
         map.getCanvas().style.cursor = '';
       });
-    },
-    [stations, onStationSelect]
-  );
+    } catch (err) {
+      console.warn('[JourneyMap] addRouteLayersToMap failed gracefully:', err);
+    }
+  },
+  [stations, onStationSelect]
+);
 
   // Initialize Map
   useEffect(() => {
     if (!mapContainerRef.current) return;
 
-    const initialLng = status.location?.lng ?? 77.2195;
-    const initialLat = status.location?.lat ?? 28.6429;
+    const initialLng = status?.location?.lng ?? 77.2195;
+    const initialLat = status?.location?.lat ?? 28.6429;
 
-    const map = new maplibregl.Map({
-      container: mapContainerRef.current,
-      style: MAP_STYLES.satellite.url,
-      center: [initialLng, initialLat],
-      zoom: 7.5,
-      pitch: 42, // 3D perspective pitch angle for realistic aerial navigation
-      bearing: status.location?.bearing ?? 0,
-      attributionControl: false,
-    });
+    let map: maplibregl.Map;
+    try {
+      map = new maplibregl.Map({
+        container: mapContainerRef.current,
+        style: MAP_STYLES.satellite.url,
+        center: [initialLng, initialLat],
+        zoom: 7.5,
+        pitch: 42, // 3D perspective pitch angle for realistic aerial navigation
+        bearing: status?.location?.bearing ?? 0,
+        attributionControl: false,
+      });
+    } catch (err) {
+      console.warn('[JourneyMap] Primary map initialization failed, fallback to dark-matter:', err);
+      try {
+        map = new maplibregl.Map({
+          container: mapContainerRef.current,
+          style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+          center: [initialLng, initialLat],
+          zoom: 7.5,
+          pitch: 42,
+          bearing: status?.location?.bearing ?? 0,
+          attributionControl: false,
+        });
+      } catch (innerErr) {
+        console.error('[JourneyMap] Fatal error creating map:', innerErr);
+        return;
+      }
+    }
 
     // Disable default scrollZoom so mouse wheel can smoothly cruise route start to end
     map.scrollZoom.disable();
 
     map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-left');
+
+    map.on('error', (e) => {
+      // If hybrid satellite style tile fails or 403, fallback to dark style
+      if (e?.error && typeof e.error.message === 'string' && e.error.message.includes('style')) {
+        console.warn('[JourneyMap] Style error caught, falling back to Carto dark style:', e.error);
+        try {
+          map.setStyle('https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json');
+        } catch {
+          // ignore
+        }
+      }
+    });
 
     map.on('load', () => {
       setMapLoaded(true);
@@ -375,7 +421,11 @@ export const JourneyMap: React.FC<JourneyMapProps> = ({
       arrivalMarkerRef.current?.remove();
       arrivalMarkerRef.current = null;
       arrivalMarkerElRef.current = null;
-      map.remove();
+      try {
+        map.remove();
+      } catch {
+        // ignore
+      }
       mapRef.current = null;
     };
   }, []);
@@ -543,7 +593,7 @@ export const JourneyMap: React.FC<JourneyMapProps> = ({
         `;
 
         arrivalMarkerElRef.current.onclick = () => {
-          const st = stations?.find((s) => s.station.code === nextCode);
+          const st = stations?.find((s) => (s?.station?.code || (s as any)?.stationCode || (s as any)?.code) === nextCode);
           if (st) onStationSelect?.(st);
         };
       }
@@ -554,15 +604,15 @@ export const JourneyMap: React.FC<JourneyMapProps> = ({
     }
   }, [
     mapLoaded,
-    status.location.lat,
-    status.location.lng,
-    status.location.bearing,
-    status.location.speedKmph,
-    status.nextStation?.code,
-    status.nextStation?.name,
-    status.nextStation?.platform,
-    status.nextStation?.scheduledArrival,
-    status.etaNextStation,
+    status?.location?.lat,
+    status?.location?.lng,
+    status?.location?.bearing,
+    status?.location?.speedKmph,
+    status?.nextStation?.code,
+    status?.nextStation?.name,
+    status?.nextStation?.platform,
+    status?.nextStation?.scheduledArrival,
+    status?.etaNextStation,
     stations,
     routeGeoJSON,
     onStationSelect,
@@ -572,60 +622,82 @@ export const JourneyMap: React.FC<JourneyMapProps> = ({
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !isFollowMode) return;
+    const lng = status?.location?.lng;
+    const lat = status?.location?.lat;
 
-    map.easeTo({
-      center: [status.location.lng, status.location.lat],
-      duration: 1200,
-      zoom: Math.max(map.getZoom(), 8),
-    });
-  }, [status.location.lat, status.location.lng, isFollowMode]);
+    if (typeof lng === 'number' && typeof lat === 'number') {
+      try {
+        map.easeTo({
+          center: [lng, lat],
+          duration: 1200,
+          zoom: Math.max(map.getZoom(), 8),
+        });
+      } catch (err) {
+        console.warn('[JourneyMap] easeTo error:', err);
+      }
+    }
+  }, [status?.location?.lat, status?.location?.lng, isFollowMode]);
 
   // Focus on Selected Station (when clicked from timeline or map)
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !selectedStation) return;
 
-    map.flyTo({
-      center: [selectedStation.station.longitude, selectedStation.station.latitude],
-      zoom: 10,
-      pitch: 45,
-      duration: 1000,
-    });
+    const lng = selectedStation.station?.longitude ?? (selectedStation as any).longitude;
+    const lat = selectedStation.station?.latitude ?? (selectedStation as any).latitude;
+    if (typeof lng !== 'number' || typeof lat !== 'number' || isNaN(lng) || isNaN(lat)) return;
 
-    if (popupRef.current) {
-      popupRef.current.remove();
+    try {
+      map.flyTo({
+        center: [lng, lat],
+        zoom: 10,
+        pitch: 45,
+        duration: 1000,
+      });
+
+      if (popupRef.current) {
+        popupRef.current.remove();
+      }
+
+      const stName = selectedStation.station?.name || (selectedStation as any).name || 'Station';
+      const stCode = selectedStation.station?.code || (selectedStation as any).code || '';
+      const dist = selectedStation.distanceFromSourceKm ?? (selectedStation as any).distance ?? 0;
+      const sched = selectedStation.scheduledArrival || selectedStation.scheduledDeparture || '—';
+      const delay = selectedStation.delayMinutes ?? 0;
+
+      const popupHtml = `
+        <div class="p-3.5 bg-slate-950/95 text-white rounded-2xl font-sans text-xs border border-slate-700/90 shadow-2xl min-w-[210px] backdrop-blur-md">
+          <div class="flex items-center justify-between gap-2 mb-1.5">
+            <span class="font-bold text-sky-400 text-sm">${stName}</span>
+            <span class="font-mono text-[10px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded font-bold">
+              ${stCode}
+            </span>
+          </div>
+          <div class="text-[11px] text-slate-300 mb-2">
+            ${dist} km from origin ${selectedStation.platform ? `• Platform ${selectedStation.platform}` : ''}
+          </div>
+          <div class="pt-2 border-t border-slate-800 flex items-center justify-between text-[11px] font-mono">
+            <span class="text-slate-400">Scheduled:</span>
+            <span class="font-semibold text-white">${sched}</span>
+          </div>
+          <div class="flex items-center justify-between text-[11px] font-mono mt-0.5">
+            <span class="text-slate-400">Delay:</span>
+            <span class="${delay > 5 ? 'text-amber-400' : 'text-emerald-400'} font-semibold">
+              ${delay > 0 ? `+${delay} min` : 'On Time'}
+            </span>
+          </div>
+        </div>
+      `;
+
+      const popup = new maplibregl.Popup({ closeButton: false, offset: 15, className: 'dark-map-popup' })
+        .setLngLat([lng, lat])
+        .setHTML(popupHtml)
+        .addTo(map);
+
+      popupRef.current = popup;
+    } catch (err) {
+      console.warn('[JourneyMap] Selected station flyTo error:', err);
     }
-
-    const popupHtml = `
-      <div class="p-3.5 bg-slate-950/95 text-white rounded-2xl font-sans text-xs border border-slate-700/90 shadow-2xl min-w-[210px] backdrop-blur-md">
-        <div class="flex items-center justify-between gap-2 mb-1.5">
-          <span class="font-bold text-sky-400 text-sm">${selectedStation.station.name}</span>
-          <span class="font-mono text-[10px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded font-bold">
-            ${selectedStation.station.code}
-          </span>
-        </div>
-        <div class="text-[11px] text-slate-300 mb-2">
-          ${selectedStation.distanceFromSourceKm} km from origin ${selectedStation.platform ? `• Platform ${selectedStation.platform}` : ''}
-        </div>
-        <div class="pt-2 border-t border-slate-800 flex items-center justify-between text-[11px] font-mono">
-          <span class="text-slate-400">Scheduled:</span>
-          <span class="font-semibold text-white">${selectedStation.scheduledArrival || selectedStation.scheduledDeparture || '—'}</span>
-        </div>
-        <div class="flex items-center justify-between text-[11px] font-mono mt-0.5">
-          <span class="text-slate-400">Delay:</span>
-          <span class="${selectedStation.delayMinutes > 5 ? 'text-amber-400' : 'text-emerald-400'} font-semibold">
-            ${selectedStation.delayMinutes > 0 ? `+${selectedStation.delayMinutes} min` : 'On Time'}
-          </span>
-        </div>
-      </div>
-    `;
-
-    const popup = new maplibregl.Popup({ closeButton: false, offset: 15, className: 'dark-map-popup' })
-      .setLngLat([selectedStation.station.longitude, selectedStation.station.latitude])
-      .setHTML(popupHtml)
-      .addTo(map);
-
-    popupRef.current = popup;
   }, [selectedStation]);
 
   // =========================================================================
@@ -640,14 +712,23 @@ export const JourneyMap: React.FC<JourneyMapProps> = ({
       setIsFollowMode(false);
 
       const target = stations[validIdx];
-      if (target && mapRef.current) {
-        mapRef.current.flyTo({
-          center: [target.station.longitude, target.station.latitude],
-          zoom: 9.8,
-          pitch: 45,
-          duration: 800,
-          essential: true,
-        });
+      const map = mapRef.current;
+      if (target && map) {
+        const lng = target.station?.longitude ?? (target as any).longitude;
+        const lat = target.station?.latitude ?? (target as any).latitude;
+        if (typeof lng === 'number' && typeof lat === 'number' && !isNaN(lng) && !isNaN(lat)) {
+          try {
+            map.flyTo({
+              center: [lng, lat],
+              zoom: 9.8,
+              pitch: 45,
+              duration: 800,
+              essential: true,
+            });
+          } catch (err) {
+            console.warn('[JourneyMap] jumpToStation flyTo error:', err);
+          }
+        }
         onStationSelect?.(target);
       }
     },
@@ -711,16 +792,23 @@ export const JourneyMap: React.FC<JourneyMapProps> = ({
 
   const handleSnapToTrain = useCallback(() => {
     setIsFollowMode(true);
-    if (mapRef.current) {
-      mapRef.current.flyTo({
-        center: [status.location.lng, status.location.lat],
-        zoom: 8.5,
-        pitch: 42,
-        bearing: status.location.bearing || 0,
-        duration: 1000,
-      });
+    const map = mapRef.current;
+    const lng = status?.location?.lng;
+    const lat = status?.location?.lat;
+    if (map && typeof lng === 'number' && typeof lat === 'number') {
+      try {
+        map.flyTo({
+          center: [lng, lat],
+          zoom: 8.5,
+          pitch: 42,
+          bearing: status?.location?.bearing || 0,
+          duration: 1000,
+        });
+      } catch (err) {
+        console.warn('[JourneyMap] SnapToTrain error:', err);
+      }
     }
-  }, [status.location.lat, status.location.lng, status.location.bearing]);
+  }, [status?.location?.lat, status?.location?.lng, status?.location?.bearing]);
 
   const handleToggleFullscreen = useCallback(() => {
     if (!document.fullscreenElement) {
@@ -887,13 +975,13 @@ export const JourneyMap: React.FC<JourneyMapProps> = ({
               title="Jump to Origin / Departure Station"
             >
               <ChevronsLeft className="w-3.5 h-3.5 text-sky-400" />
-              <span>{stations[0]?.station.code || 'START'}</span>
+              <span>{stations[0]?.station?.code || (stations[0] as any)?.stationCode || (stations[0] as any)?.code || 'START'}</span>
             </button>
 
             <div className="flex items-center gap-1.5 text-xs text-sky-300 font-sans font-semibold min-w-0">
               <MapPin className="w-3.5 h-3.5 text-sky-400 shrink-0" />
               <span className="truncate max-w-[200px] sm:max-w-[260px]">
-                {currentCruiseStation?.station.name}
+                {currentCruiseStation?.station?.name || (currentCruiseStation as any)?.stationName || (currentCruiseStation as any)?.name || 'Station'}
               </span>
               <span className="text-slate-400 text-[10px] font-mono shrink-0">
                 ({cruiseIndex + 1}/{stations.length})
@@ -906,7 +994,7 @@ export const JourneyMap: React.FC<JourneyMapProps> = ({
               className="text-slate-300 hover:text-white font-bold flex items-center gap-1 transition-colors px-1.5 py-0.5 rounded hover:bg-slate-800"
               title="Jump to Final Destination Station"
             >
-              <span>{stations[stations.length - 1]?.station.code || 'DEST'}</span>
+              <span>{stations[stations.length - 1]?.station?.code || (stations[stations.length - 1] as any)?.stationCode || (stations[stations.length - 1] as any)?.code || 'DEST'}</span>
               <ChevronsRight className="w-3.5 h-3.5 text-sky-400" />
             </button>
           </div>
@@ -931,7 +1019,7 @@ export const JourneyMap: React.FC<JourneyMapProps> = ({
 
             <div className="flex items-center gap-3">
               <span className="hidden sm:inline text-slate-500">
-                {currentCruiseStation?.distanceFromSourceKm} km
+                {currentCruiseStation?.distanceFromSourceKm ?? (currentCruiseStation as any)?.distance ?? 0} km
               </span>
               <button
                 type="button"

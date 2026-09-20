@@ -542,8 +542,9 @@ export class RailRadarProvider implements TrainProvider {
 
       // Sort by sequence along route
       combinedStops.sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0));
+      const allSchedRoute = schedResp.data.route || [];
 
-      return combinedStops.map((stop) => {
+      return combinedStops.map((stop, i) => {
         const sched = schedByCode.get(stop.stationCode || '');
         const stationObj: Station = {
           code: stop.stationCode || '',
@@ -563,6 +564,20 @@ export class RailRadarProvider implements TrainProvider {
 
         const delay = stop.delayArrival ?? stop.delayDeparture ?? d.delayMinutes ?? 0;
 
+        // Collect smaller intermediate non-stop stations between this halt and next halt
+        const nextStop = combinedStops[i + 1];
+        const nextSeq = nextStop?.sequence ?? Infinity;
+        const curSeq = stop.sequence ?? 0;
+
+        const intermediateStations = allSchedRoute
+          .filter((r) => !r.isHalt && r.sequence > curSeq && r.sequence < nextSeq)
+          .map((r) => ({
+            code: r.station?.code || r.stationCode || '',
+            name: r.station?.name || r.stationName || '',
+            distanceKm: Math.round(r.distance || 0),
+          }))
+          .filter((r) => r.code && r.name);
+
         return {
           station: stationObj,
           distanceFromSourceKm: Math.round(stop.distance || 0),
@@ -576,6 +591,7 @@ export class RailRadarProvider implements TrainProvider {
           platform: stop.platform,
           status,
           isHalt: stop.isHalt ?? true,
+          intermediateStations: intermediateStations.length > 0 ? intermediateStations : undefined,
         };
       });
     } catch (err) {
@@ -652,6 +668,8 @@ export class RailRadarProvider implements TrainProvider {
             status: mappedStatus,
             platform: stop.platform,
             isNextHalt,
+            distance: Math.round(stop.distance || 0),
+            sequence: stop.sequence,
           },
           geometry: { type: 'Point', coordinates: [stop.station!.lng, stop.station!.lat] },
         });

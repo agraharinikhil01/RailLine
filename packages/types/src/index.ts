@@ -100,6 +100,12 @@ export interface LiveTrainStatus {
   operatingDays?: string[];
 }
 
+export interface IntermediateStation {
+  code: string;
+  name: string;
+  distanceKm?: number;
+}
+
 export interface JourneyStation {
   station: Station;
   distanceFromSourceKm: number;
@@ -113,6 +119,7 @@ export interface JourneyStation {
   platform?: string;
   status: StationStatus;
   isHalt?: boolean;
+  intermediateStations?: IntermediateStation[];
 }
 
 export interface Journey {
