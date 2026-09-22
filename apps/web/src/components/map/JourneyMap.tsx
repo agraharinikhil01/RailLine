@@ -46,6 +46,14 @@ const ESRI_SATELLITE_STYLE: maplibregl.StyleSpecification = {
       maxzoom: 19,
       attribution: '© Esri, Maxar, Earthstar Geographics',
     },
+    'esri-reference': {
+      type: 'raster',
+      tiles: [
+        'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
+      ],
+      tileSize: 256,
+      maxzoom: 19,
+    },
     'carto-labels': {
       type: 'raster',
       tiles: [
@@ -61,6 +69,13 @@ const ESRI_SATELLITE_STYLE: maplibregl.StyleSpecification = {
       type: 'raster',
       source: 'esri-imagery',
       minzoom: 0,
+      maxzoom: 19,
+    },
+    {
+      id: 'esri-reference-layer',
+      type: 'raster',
+      source: 'esri-reference',
+      minzoom: 3,
       maxzoom: 19,
     },
     {
@@ -154,7 +169,26 @@ export const JourneyMap: React.FC<JourneyMapProps> = ({
           });
         }
 
-      // Remaining Route Layer (dashed amber / slate line)
+      // Remaining Route Casing (Dark outline for sharp track separation against satellite imagery)
+      if (!map.getLayer('route-remaining-casing')) {
+        map.addLayer({
+          id: 'route-remaining-casing',
+          type: 'line',
+          source: sourceId,
+          filter: ['==', ['get', 'segment'], 'remaining'],
+          layout: {
+            'line-join': 'round',
+            'line-cap': 'round',
+          },
+          paint: {
+            'line-color': '#020617',
+            'line-width': 5.5,
+            'line-opacity': 0.85,
+          },
+        });
+      }
+
+      // Remaining Route Layer (dashed amber / gold line)
       if (!map.getLayer('route-remaining')) {
         map.addLayer({
           id: 'route-remaining',
@@ -166,10 +200,29 @@ export const JourneyMap: React.FC<JourneyMapProps> = ({
             'line-cap': 'round',
           },
           paint: {
-            'line-color': '#f59e0b',
+            'line-color': '#fbbf24',
             'line-width': 3.5,
-            'line-opacity': 0.85,
+            'line-opacity': 0.95,
             'line-dasharray': [2, 1.5],
+          },
+        });
+      }
+
+      // Completed Route Dark Casing Layer (Solid dark backing for extreme neon contrast)
+      if (!map.getLayer('route-completed-casing')) {
+        map.addLayer({
+          id: 'route-completed-casing',
+          type: 'line',
+          source: sourceId,
+          filter: ['==', ['get', 'segment'], 'completed'],
+          layout: {
+            'line-join': 'round',
+            'line-cap': 'round',
+          },
+          paint: {
+            'line-color': '#020617',
+            'line-width': 7.5,
+            'line-opacity': 0.9,
           },
         });
       }
@@ -189,7 +242,7 @@ export const JourneyMap: React.FC<JourneyMapProps> = ({
             'line-color': '#0284c7',
             'line-width': 12,
             'line-opacity': 0.6,
-            'line-blur': 5,
+            'line-blur': 4,
           },
         });
       }
@@ -208,12 +261,12 @@ export const JourneyMap: React.FC<JourneyMapProps> = ({
           paint: {
             'line-color': '#00f0ff',
             'line-width': 4.5,
-            'line-opacity': 0.95,
+            'line-opacity': 1.0,
           },
         });
       }
 
-      // 1. Intermediate Passing Stations (Subtle small dots between major halts)
+      // 1. Intermediate Passing Stations (Dots between major halts - Emerald Green when passed)
       if (!map.getLayer('route-intermediate-stations')) {
         map.addLayer({
           id: 'route-intermediate-stations',
@@ -221,21 +274,21 @@ export const JourneyMap: React.FC<JourneyMapProps> = ({
           source: sourceId,
           filter: ['all', ['==', '$type', 'Point'], ['==', ['get', 'stationType'], 'intermediate']],
           paint: {
-            'circle-radius': 3.0,
+            'circle-radius': 3.5,
             'circle-color': [
               'case',
               ['==', ['get', 'status'], 'COMPLETED'],
-              '#38bdf8',
-              '#94a3b8',
+              '#10b981', // emerald green for passed stations!
+              '#94a3b8', // slate for upcoming
             ],
-            'circle-opacity': 0.85,
-            'circle-stroke-width': 1.2,
+            'circle-opacity': 0.95,
+            'circle-stroke-width': 1.5,
             'circle-stroke-color': '#020617',
           },
         });
       }
 
-      // 2. Intermediate Station Labels (Tiny name labels visible when zooming in between stations)
+      // 2. Intermediate Station Labels (Tiny crisp name labels visible when zooming in)
       if (!map.getLayer('route-intermediate-labels')) {
         map.addLayer({
           id: 'route-intermediate-labels',
@@ -245,21 +298,21 @@ export const JourneyMap: React.FC<JourneyMapProps> = ({
           filter: ['all', ['==', '$type', 'Point'], ['==', ['get', 'stationType'], 'intermediate']],
           layout: {
             'text-field': ['get', 'name'],
-            'text-size': 8.5,
+            'text-size': 9,
             'text-offset': [0, 1.2],
             'text-anchor': 'top',
             'text-font': ['Open Sans Regular', 'Arial Unicode MS Regular'],
             'text-max-width': 8,
           },
           paint: {
-            'text-color': '#94a3b8',
+            'text-color': '#f8fafc',
             'text-halo-color': '#020617',
-            'text-halo-width': 2.0,
+            'text-halo-width': 2.5,
           },
         });
       }
 
-      // 3. Major Halt Stations (Prominent Halt Dots)
+      // 3. Major Halt Stations (Prominent Halt Dots - Emerald green stroke when completed)
       if (!map.getLayer('route-halt-stations')) {
         map.addLayer({
           id: 'route-halt-stations',
@@ -267,14 +320,14 @@ export const JourneyMap: React.FC<JourneyMapProps> = ({
           source: sourceId,
           filter: ['all', ['==', '$type', 'Point'], ['!=', ['get', 'stationType'], 'intermediate']],
           paint: {
-            'circle-radius': 6.5,
+            'circle-radius': 7.0,
             'circle-color': '#ffffff',
-            'circle-stroke-width': 3,
+            'circle-stroke-width': 3.5,
             'circle-stroke-color': [
               'case',
               ['==', ['get', 'status'], 'COMPLETED'],
-              '#0284c7',
-              '#f59e0b',
+              '#10b981', // Emerald green for passed halts!
+              '#f59e0b', // Amber for upcoming halts
             ],
           },
         });
@@ -289,15 +342,15 @@ export const JourneyMap: React.FC<JourneyMapProps> = ({
           filter: ['all', ['==', '$type', 'Point'], ['!=', ['get', 'stationType'], 'intermediate']],
           layout: {
             'text-field': ['get', 'name'],
-            'text-size': 11,
+            'text-size': 11.5,
             'text-offset': [0, 1.5],
             'text-anchor': 'top',
             'text-font': ['Open Sans Regular', 'Arial Unicode MS Regular'],
           },
           paint: {
             'text-color': '#ffffff',
-            'text-halo-color': '#090d16',
-            'text-halo-width': 2.5,
+            'text-halo-color': '#020617',
+            'text-halo-width': 3.0,
           },
         });
       }

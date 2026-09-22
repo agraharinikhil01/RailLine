@@ -486,6 +486,7 @@ export const TrackingPage: React.FC = () => {
                   <JourneyTimeline
                     stations={timeline}
                     routeGeoJSON={routeGeoJSON}
+                    currentDistanceKm={status.distanceCoveredKm}
                     onSelectStation={handleStationClick}
                     className="h-full"
                   />

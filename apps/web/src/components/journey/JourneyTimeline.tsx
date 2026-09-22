@@ -6,6 +6,7 @@ import { clsx } from 'clsx';
 export interface JourneyTimelineProps {
   stations: JourneyStation[];
   routeGeoJSON?: GeoJSON.FeatureCollection<GeoJSON.Geometry>;
+  currentDistanceKm?: number;
   onSelectStation?: (station: JourneyStation) => void;
   className?: string;
 }
@@ -13,6 +14,7 @@ export interface JourneyTimelineProps {
 export const JourneyTimeline: React.FC<JourneyTimelineProps> = ({
   stations,
   routeGeoJSON,
+  currentDistanceKm,
   onSelectStation,
   className = '',
 }) => {
@@ -213,32 +215,79 @@ export const JourneyTimeline: React.FC<JourneyTimelineProps> = ({
                     </span>
                   </div>
 
-                  {intermediateStops.map((subSt, sIdx) => (
-                    <div
-                      key={`${subSt.code}-${sIdx}`}
-                      className="flex items-center justify-between gap-2 py-1 px-2.5 rounded-lg bg-slate-50 hover:bg-slate-100/90 text-xs transition-colors border border-slate-100"
-                    >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <div className="w-1.5 h-1.5 rounded-full bg-slate-300 shrink-0" />
-                        <span className="font-semibold text-slate-700 truncate text-[11px]">
-                          {subSt.name}
-                        </span>
-                        {subSt.code && (
-                          <span className="text-[9px] font-mono text-slate-400 font-bold shrink-0">
-                            ({subSt.code})
-                          </span>
+                  {intermediateStops.map((subSt, sIdx) => {
+                    // Check if train has passed this non-stop passing station:
+                    // 1. If next primary halt is already COMPLETED, all intermediate stations before it are passed
+                    // 2. If current station is not UPCOMING and train's covered distance has reached/passed this station's distance
+                    // 3. If current station is COMPLETED and next station is also COMPLETED or train is beyond this station
+                    const isPassed = Boolean(
+                      (nextStation && nextStation.status === 'COMPLETED') ||
+                      (item.status !== 'UPCOMING' &&
+                        typeof currentDistanceKm === 'number' &&
+                        currentDistanceKm > 0 &&
+                        typeof subSt.distanceKm === 'number' &&
+                        subSt.distanceKm > 0 &&
+                        currentDistanceKm >= subSt.distanceKm) ||
+                      (item.status === 'COMPLETED' && (!nextStation || nextStation.status === 'COMPLETED'))
+                    );
+
+                    return (
+                      <div
+                        key={`${subSt.code}-${sIdx}`}
+                        className={clsx(
+                          'flex items-center justify-between gap-2 py-1 px-2.5 rounded-lg text-xs transition-colors border',
+                          isPassed
+                            ? 'bg-emerald-50/40 hover:bg-emerald-50/70 border-emerald-100/70'
+                            : 'bg-slate-50 hover:bg-slate-100/90 border-slate-100'
                         )}
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          {/* Dot: Bright green when train has passed, grey when upcoming */}
+                          <div
+                            className={clsx(
+                              'rounded-full shrink-0 transition-all',
+                              isPassed
+                                ? 'w-2 h-2 bg-emerald-500 shadow-xs shadow-emerald-500/50 ring-2 ring-emerald-100'
+                                : 'w-1.5 h-1.5 bg-slate-300'
+                            )}
+                          />
+                          <span
+                            className={clsx(
+                              'font-semibold truncate text-[11px]',
+                              isPassed ? 'text-slate-900' : 'text-slate-700'
+                            )}
+                          >
+                            {subSt.name}
+                          </span>
+                          {subSt.code && (
+                            <span className="text-[9px] font-mono text-slate-400 font-bold shrink-0">
+                              ({subSt.code})
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span
+                            className={clsx(
+                              'text-[10px] font-mono font-bold',
+                              isPassed ? 'text-emerald-700' : 'text-slate-600'
+                            )}
+                          >
+                            {subSt.distanceKm} km
+                          </span>
+                          <span
+                            className={clsx(
+                              'text-[9px] font-mono font-medium px-1.5 py-0.5 rounded',
+                              isPassed
+                                ? 'bg-emerald-100/80 text-emerald-800'
+                                : 'bg-slate-200/70 text-slate-600'
+                            )}
+                          >
+                            Non-stop
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span className="text-[10px] font-mono font-bold text-slate-600">
-                          {subSt.distanceKm} km
-                        </span>
-                        <span className="text-[9px] font-mono font-medium px-1.5 py-0.5 rounded bg-slate-200/70 text-slate-600">
-                          Non-stop
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>

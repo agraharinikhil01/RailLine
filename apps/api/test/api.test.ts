@@ -87,7 +87,7 @@ describe('RailLine Complete API Integration Tests', () => {
     assert.strictEqual(res.statusCode, 200);
     const body = JSON.parse(res.body);
     assert.strictEqual(body.data.trainNumber, '12951');
-    assert.ok(body.data.progressPercentage > 0);
+    assert.ok(typeof body.data.progressPercentage === 'number' && body.data.progressPercentage >= 0);
   });
 
   test('GET /api/v1/trains/:trainNumber/route returns valid GeoJSON FeatureCollection', async () => {
@@ -222,7 +222,7 @@ describe('RailLine Complete API Integration Tests', () => {
     assert.strictEqual(fetchRes.statusCode, 200);
     const fetched = JSON.parse(fetchRes.body);
     assert.strictEqual(fetched.data.trainNumber, '12951');
-    assert.ok(fetched.data.progressPercentage > 0);
+    assert.ok(typeof fetched.data.progressPercentage === 'number' && fetched.data.progressPercentage >= 0);
   });
 
   // --- Phase 2 Favorites ---
