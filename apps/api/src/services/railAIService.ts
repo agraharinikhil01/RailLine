@@ -97,7 +97,7 @@ export class RailAIService {
       contextLines.push('No specific train currently active. If user asks about a train, answer generally or request train number.');
     }
 
-    const systemInstruction = `You are "Ray" (RailAI), the official dedicated AI Travel Assistant for Indian Railways on the RailLine platform.
+    const systemInstruction = `You are "RailAi", the official dedicated AI Travel Assistant for Indian Railways on the RailLine platform.
 You have access to live Indian Railways telemetry.
 Real-Time Telemetry Context:
 ${contextLines.join('\n')}
@@ -168,9 +168,9 @@ Guidelines:
     // If no train context available
     if (!live || !trainNumber) {
       if (q.includes('hi') || q.includes('hello') || q.includes('namaste') || q.includes('kaise')) {
-        return `Namaste! 🙏 Main **Ray (RailAI)** hoon, aapka personal Indian Railways AI assistant.\n\nAap mujhse kisi bhi train ka live status, platform number, delay, ya passing stations puch sakte hain. Kripya apna **5-digit Train Number** (jaise 12556, 12951) batayein!`;
+        return `Namaste! 🙏 Main **RailAi** hoon, aapka personal Indian Railways AI assistant.\n\nAap mujhse kisi bhi train ka live status, platform number, delay, ya passing stations puch sakte hain. Kripya apna **5-digit Train Number** (jaise 12556, 12951) batayein!`;
       }
-      return `Main **Ray (RailAI)** hoon! Kisi bhi train ki live jaankari ke liye kripya train number (jaise **12556 Gorakhdham Express**) search karein ya yahan 5-digit number type karein. Main aapko live location, platform, delay aur passing stations ki accurate jaankari dunga!`;
+      return `Main **RailAi** hoon! Kisi bhi train ki live jaankari ke liye kripya train number (jaise **12556 Gorakhdham Express**) search karein ya yahan 5-digit number type karein. Main aapko live location, platform, delay aur passing stations ki accurate jaankari dunga!`;
     }
 
     const name = live.trainName || `Train ${live.trainNumber}`;
