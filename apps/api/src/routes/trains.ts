@@ -1,6 +1,7 @@
 import { FastifyInstance, FastifyPluginAsync } from 'fastify';
 import { trainService } from '../services/trainService';
 import { liveStatusService } from '../services/liveStatusService';
+import { railAIService } from '../services/railAIService';
 import { InvalidRequestError } from '../utils/errors';
 
 export const trainRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) => {
@@ -48,5 +49,26 @@ export const trainRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) 
     const { date } = request.query as { date?: string };
     const history = await trainService.getHistoricalTrip(trainNumber, date);
     return reply.send({ data: history });
+  });
+
+  // Train-specific AI Chat: POST /api/v1/trains/:trainNumber/chat
+  fastify.post('/:trainNumber/chat', async (request, reply) => {
+    const { trainNumber } = request.params as { trainNumber: string };
+    const { message, history } = (request.body as any) || {};
+    if (!message || typeof message !== 'string') {
+      throw new InvalidRequestError('Body field "message" is required.');
+    }
+    const response = await railAIService.chat(message, trainNumber, history);
+    return reply.send({ data: response });
+  });
+
+  // General Train AI Chat: POST /api/v1/trains/chat
+  fastify.post('/chat', async (request, reply) => {
+    const { message, trainNumber, history } = (request.body as any) || {};
+    if (!message || typeof message !== 'string') {
+      throw new InvalidRequestError('Body field "message" is required.');
+    }
+    const response = await railAIService.chat(message, trainNumber, history);
+    return reply.send({ data: response });
   });
 };

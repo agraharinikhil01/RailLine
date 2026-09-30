@@ -280,4 +280,35 @@ describe('RailLine Complete API Integration Tests', () => {
     assert.ok(body.error);
     assert.strictEqual(body.error.code, 'TRAIN_NOT_FOUND');
   });
+
+  // --- RailAI Assistant Endpoint Tests ---
+
+  test('POST /api/v1/trains/:trainNumber/chat returns contextual train intelligence', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/v1/trains/12951/chat',
+      payload: { message: 'Train abhi kahan hai aur kitna late hai?' },
+    });
+
+    assert.strictEqual(res.statusCode, 200);
+    const body = JSON.parse(res.body);
+    assert.ok(body.data);
+    assert.strictEqual(body.data.trainNumber, '12951');
+    assert.ok(typeof body.data.reply === 'string' && body.data.reply.length > 10);
+    assert.ok(Array.isArray(body.data.suggestedQuestions));
+    assert.ok(body.data.suggestedQuestions.length > 0);
+  });
+
+  test('POST /api/v1/trains/chat handles general railway questions', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/v1/trains/chat',
+      payload: { message: 'Hello, train live status kaise dekhein?' },
+    });
+
+    assert.strictEqual(res.statusCode, 200);
+    const body = JSON.parse(res.body);
+    assert.ok(body.data);
+    assert.ok(typeof body.data.reply === 'string' && body.data.reply.length > 10);
+  });
 });

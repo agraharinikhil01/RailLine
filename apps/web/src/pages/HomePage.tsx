@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Search,
@@ -18,6 +18,8 @@ import { useRecentSearches } from '../hooks/useRecentSearches';
 import { TrainSearchResultCard } from '../components/search/TrainSearchResultCard';
 import { Skeleton } from '../components/ui/Skeleton';
 import { EmptyState } from '../components/ui/EmptyState';
+import { AskRayFloatingButton } from '../components/ai/AskRayFloatingButton';
+import { RailAIChatModal } from '../components/ai/RailAIChatModal';
 import { TrainSearchResult } from '@railline/types';
 
 interface QuickSearchItem {
@@ -91,6 +93,9 @@ export const HomePage: React.FC = () => {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const { searchTerm, setSearchTerm, debouncedTerm, results, isLoading } = useTrainSearch(200);
   const { recentSearches, addRecentSearch, removeRecentSearch, clearRecentSearches } = useRecentSearches();
+
+  // RailAI Assistant Modal State
+  const [isAIChatOpen, setIsAIChatOpen] = useState(false);
 
   // Keyboard shortcut: Cmd+K or Ctrl+K focuses the search input
   useEffect(() => {
@@ -634,6 +639,15 @@ export const HomePage: React.FC = () => {
           </div>
         </div>
       </footer>
+
+      {/* Floating Ask Ray AI Button (Wireframe match) */}
+      <AskRayFloatingButton onClick={() => setIsAIChatOpen(true)} />
+
+      {/* RailAI Interactive Chat Assistant */}
+      <RailAIChatModal
+        isOpen={isAIChatOpen}
+        onClose={() => setIsAIChatOpen(false)}
+      />
     </div>
   );
 };

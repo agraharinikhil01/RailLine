@@ -27,6 +27,7 @@ const envSchema = z.object({
   OPENWEATHER_API_KEY: z.string().optional().transform((v) => getSecret(v, 'ZTFhNzI5ZjQ1MzgxZGM0MjRhOWMyYzY2ZThhZDVkN2U=')),
   OPENTOPOGRAPHY_API_KEY: z.string().optional().transform((v) => getSecret(v, 'MTc1NjYyNDgxZGM2NjNjNmJiZDE1MTI2ZjI1NmJhZGU=')),
   MAPTILER_API_KEY: z.string().optional().transform((v) => getSecret(v, 'UmJ0YWdSeUVsdXE3MFdJd2dhbzg=')),
+  GEMINI_API_KEY: z.string().optional().default(''),
 });
 
 export type Env = z.infer<typeof envSchema>;

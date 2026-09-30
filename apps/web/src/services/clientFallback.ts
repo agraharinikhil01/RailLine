@@ -1909,5 +1909,26 @@ export async function clientFallbackHandler<T>(endpoint: string): Promise<T> {
     return list as unknown as T;
   }
 
+  // 12. RailAI Chat: trains/:trainNumber/chat or trains/chat
+  if (parts[0] === 'trains' && (parts[2] === 'chat' || parts[1] === 'chat')) {
+    const tNum = parts[2] === 'chat' ? parts[1] : (trainNumber || '12556');
+    const data = TRAINS_DATABASE[tNum] || TRAINS_DATABASE['12556'];
+    const curStn = data?.stations?.find(s => s.status === 'CURRENT') || data?.stations?.[0];
+    const nextStn = data?.stations?.find(s => s.status === 'UPCOMING') || data?.stations?.[1];
+
+    return {
+      reply: `📍 **${data?.train?.name || 'Gorakhdham Express'} (${tNum})** Live Status:\n\n• **Current Station:** ${curStn?.station?.name || 'New Delhi'} (Platform ${curStn?.platform || '1'})\n• **Next Halt:** ${nextStn?.station?.name || 'Kanpur Central'}\n• **Delay Status:** ${curStn?.delayMinutes ? `+${curStn.delayMinutes} mins delay` : 'On Time'}\n• **Speed:** 85 km/h\n\nAap mujhse platform, passing stations, ya delay ke baare me puch sakte hain!`,
+      trainNumber: tNum,
+      trainName: data?.train?.name,
+      suggestedQuestions: [
+        'Train abhi kahan hai?',
+        'Kitna late chal rahi hai?',
+        'Platform number kya hai?',
+        'Beech ke passing stations kaunse hain?'
+      ],
+      source: 'rail-ai-engine',
+    } as unknown as T;
+  }
+
   return {} as unknown as T;
 }

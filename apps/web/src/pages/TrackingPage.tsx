@@ -33,6 +33,8 @@ import { WeatherCard } from '../components/weather/WeatherCard';
 import { RouteWeatherStrip } from '../components/weather/RouteWeatherStrip';
 import { GeographyCard } from '../components/companion/GeographyCard';
 import { ShareModal } from '../components/sharing/ShareModal';
+import { AskRayFloatingButton } from '../components/ai/AskRayFloatingButton';
+import { RailAIChatModal } from '../components/ai/RailAIChatModal';
 import { ErrorState } from '../components/ui/ErrorState';
 import { SectionErrorBoundary } from '../components/ui/SectionErrorBoundary';
 import { JourneyStation } from '@railline/types';
@@ -86,6 +88,9 @@ export const TrackingPage: React.FC = () => {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | undefined>();
   const [isGeneratingShare, setIsGeneratingShare] = useState(false);
+
+  // RailAI Assistant Modal State
+  const [isAIChatOpen, setIsAIChatOpen] = useState(false);
 
   // Train Schedule & Details
   const { train: trainDetails } = useTrainDetails(trainNumber);
@@ -582,6 +587,18 @@ export const TrackingPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Floating Ask Ray AI Button (Wireframe match) */}
+      <AskRayFloatingButton onClick={() => setIsAIChatOpen(true)} />
+
+      {/* Dedicated RailAI Assistant Modal */}
+      <RailAIChatModal
+        isOpen={isAIChatOpen}
+        onClose={() => setIsAIChatOpen(false)}
+        trainNumber={status.trainNumber}
+        trainName={status.trainName}
+        liveStatus={status}
+      />
     </div>
   );
 };

@@ -240,3 +240,25 @@ export interface HistoricalTripData {
   stops: HistoricalTripStop[];
 }
 
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  timestamp: string;
+}
+
+export interface ChatRequest {
+  message: string;
+  trainNumber?: string;
+  history?: Array<{ role: 'user' | 'assistant'; content: string }>;
+}
+
+export interface ChatResponse {
+  reply: string;
+  trainNumber?: string;
+  trainName?: string;
+  suggestedQuestions?: string[];
+  source?: 'gemini' | 'rail-ai-engine';
+}
+
+
